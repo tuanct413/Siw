@@ -31,3 +31,14 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Ignore env file
+.env
+
+# IDE và build
+.idea/
+.vscode/
+target/
+*.iml
+
+
