@@ -10,30 +10,55 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      # JWT
+      JWT_EXPIRATION: 86400000
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+      # Application
+      SPRING_APPLICATION_NAME: demo
+
+      # Datasource / Database
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: 30000
+      SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT: 60000
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: 3
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: 1
+      SPRING_DATASOURCE_URL: jdbc:mysql://bymtmk0fqhii7rajjg3j-mysql.services.clever-cloud.com:3306/bymtmk0fqhii7rajjg3j?useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: u19vbbotaubg2qdb
+      SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+      # JPA / Hibernate
+      SPRING_JPA_HIBERNATE_DDL_AUTO: none
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQL8Dialect
+      SPRING_JPA_SHOW_SQL: true
+
+      # Mail
+      SPRING_MAIL_HOST: smtp.gmail.com
+      SPRING_MAIL_PORT: 587
+      SPRING_MAIL_USERNAME: tuanct413@gmail.com
+      SPRING_MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: true
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: true
+
     steps:
-    - name: Checkout source code
-      uses: actions/checkout@v4
+      - name: Checkout source code
+        uses: actions/checkout@v4
 
-    - name: List project files
-      run: ls -R
+      - name: List project files
+        run: ls -R
 
-    - name: Set up JDK 21
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'temurin'
-        cache: maven
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
 
-    - name: Build with Maven
-      run: mvn -B clean compile
-      working-directory: ./Backend/demo   # trỏ đúng folder chứa pom.xml
+      - name: Build with Maven
+        run: mvn -B clean compile
+        working-directory: ./Backend/demo
 
-    - name: Run Tests
-      run: mvn test
-      working-directory: ./Backend/demo
-
-    # Tạm thời bỏ dependency submission nếu gây lỗi
-    # - name: Update dependency graph
-    #   uses: advanced-security/maven-dependency-submission-action@v4
-    #   with:
-    #     directory: ./Backend/demo
+      - name: Run Tests
+        run: mvn test
+        working-directory: ./Backend/demo
