@@ -27,11 +27,11 @@ jobs:
 
     - name: Build with Maven
       run: mvn -B package
-      working-directory: ./Backend   # ✅ đúng tên thư mục
+      working-directory: ./Backend/demo   # ✅ đúng tên thư mục
 
     - name: Run Tests
       run: mvn test
-      working-directory: ./Backend   # ✅ đúng tên thư mục
+      working-directory: ./Backend/demo   # ✅ đúng tên thư mục
 
     - name: Update dependency graph
       uses: advanced-security/maven-dependency-submission-action@v4
