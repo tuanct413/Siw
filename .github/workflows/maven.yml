@@ -8,13 +8,13 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # môi trường runner Ubuntu
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout source code
       uses: actions/checkout@v4
 
-    # Debug: In ra danh sách file để chắc chắn pom.xml nằm ở đâu
+    # Debug: In ra danh sách file để chắc chắn
     - name: List project files
       run: ls -R
 
@@ -25,18 +25,15 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
-    # Build project (chạy trong thư mục backend)
     - name: Build with Maven
       run: mvn -B package
-      working-directory: ./backend   # đổi lại nếu pom.xml ở chỗ khác
+      working-directory: ./Backend   # ✅ đúng tên thư mục
 
-    # Run tests
     - name: Run Tests
       run: mvn test
-      working-directory: ./backend
+      working-directory: ./Backend   # ✅ đúng tên thư mục
 
-    # Optional: Update dependency graph (Dependabot support)
     - name: Update dependency graph
       uses: advanced-security/maven-dependency-submission-action@v4
       with:
-        directory: ./backend   # chỉ định đúng thư mục chứa pom.xml
+        directory: ./Backend   # ✅ đúng tên thư mục
