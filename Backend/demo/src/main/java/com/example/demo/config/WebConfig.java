@@ -14,9 +14,10 @@ public class WebConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")           // Áp dụng cho tất cả endpoint
-                         .allowedOrigins(
+                        .allowedOrigins(
                             "http://localhost:3000", 
-                            "https://siwsomething.netlify.app" // thêm Netlify URL
+                            "https://siwsomething.netlify.app", //ftonend
+                            "https://zippy-radiance-production-674f.up.railway.app" // sever
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
