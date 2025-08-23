@@ -17,7 +17,7 @@ public class WebConfig {
                         .allowedOrigins(
                             "http://localhost:3000", 
                             "https://siwsomething.netlify.app", //ftonend
-                            "https://zippy-radiance-production-674f.up.railway.app" // sever
+                            "https://siw-production.up.railway.app" // sever
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
