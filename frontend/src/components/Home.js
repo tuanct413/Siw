@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Cloud, Sun, CloudRain, Wind, Thermometer, Droplets, Eye, Gauge } from 'lucide-react';
 import '../styles/Home.css';
-import axios from 'axios';
+
 
 const Home = () => {
     const [currentTime, setCurrentTime] = useState(new Date());
