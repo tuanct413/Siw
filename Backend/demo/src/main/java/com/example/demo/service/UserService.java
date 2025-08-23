@@ -80,7 +80,7 @@ public class UserService implements UserServiceinterface {
             user.setVerified(true);
             userRepository.save(user); // lưu user vào DB sau khi OTP đúng
             response.put("message", "Xác thực thành công. User đã được lưu.");
-            response.put("data", Map.of("email", user.getEmail(), "name", user.getName()));
+             response.put("data", Map.of("email", user.getEmail(), "name", user.getName() ,"verify", user.isVerified() ));
             return ResponseEntity.ok(response);
         } else {
             response.put("message", "Mã OTP không đúng");

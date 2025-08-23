@@ -1,0 +1,153 @@
+/* Register.css */
+.register-page {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.register-container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    width: 100%;
+    max-width: 400px;
+    animation: slideUp 0.6s ease-out;
+    text-align: center;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.register-logo {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #43e97b, #38f9d7);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    box-shadow: 0 8px 20px rgba(67, 233, 123, 0.3);
+    animation: logoRotate 2s ease-in-out infinite alternate;
+}
+
+@keyframes logoRotate {
+    from { transform: rotateY(0deg); }
+    to { transform: rotateY(10deg); }
+}
+
+.register-logo span {
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+.register-container h2 {
+    color: #333;
+    font-weight: 600;
+    margin-bottom: 25px;
+}
+
+.register-container form {
+    display: flex;
+    flex-direction: column;
+}
+
+.register-container input {
+    margin-bottom: 15px;
+    padding: 15px 20px;
+    border: 2px solid #e1e5e9;
+    border-radius: 12px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.register-container input:focus {
+    outline: none;
+    border-color: #43e97b;
+    box-shadow: 0 0 0 3px rgba(67, 233, 123, 0.2);
+    transform: translateY(-2px);
+}
+
+.register-container input::placeholder {
+    color: #999;
+}
+
+.register-container button {
+    padding: 15px;
+    background: linear-gradient(135deg, #43e97b, #38f9d7);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.register-container button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(67, 233, 123, 0.3);
+}
+
+.register-container button:active {
+    transform: translateY(0);
+}
+
+.register-container button:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.register-container button.loading {
+    color: transparent;
+}
+
+.register-container button.loading::after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    transform: translate(-50%, -50%);
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .register-container {
+        padding: 30px 20px;
+        margin: 10px;
+    }
+
+    .register-container input {
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+
+    .register-container button {
+        padding: 12px;
+        font-size: 14px;
+    }
+}
