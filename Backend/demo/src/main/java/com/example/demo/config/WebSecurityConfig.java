@@ -11,12 +11,21 @@ public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors()  // Enable CORS, dùng WebConfig
-            .and()
-            .csrf().disable()  // Tạm disable CSRF cho test
-            .authorizeHttpRequests()
-            .requestMatchers("/users/**").permitAll()  // Cho phép frontend gọi test API
-            .anyRequest().authenticated();  // Các endpoint khác vẫn cần auth
+                .cors()
+                .and()
+                .csrf().disable()
+                .authorizeHttpRequests()
+                //Public API không cần token
+                .requestMatchers("/users/**").permitAll()     // Cho phép users API
+                .requestMatchers("/weather/**").permitAll()   //  Cho phép weather API
+
+                //   //  API yêu cầu token (JWT/session)
+                //            .requestMatchers("/users/**").authenticated()
+                //            .requestMatchers("/profile/**").authenticated()
+                //
+                //            //  API chỉ cho ADMIN
+                //            .requestMatchers("/admin/**").hasRole("ADMIN")
+                .anyRequest().authenticated();                // Các API khác yêu cầu auth
 
         return http.build();
     }

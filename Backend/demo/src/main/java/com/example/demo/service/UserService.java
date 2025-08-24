@@ -6,6 +6,8 @@ import com.example.demo.repository.UserRepository;
 import jakarta.mail.MessagingException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.security.auth.Subject;
@@ -20,6 +22,7 @@ public class UserService implements UserServiceinterface {
 
     private final JwtService jwtService;
     private final MailService mailService;
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
 
     public UserService(UserRepository userRepository , JwtService jwtService,MailService mailService) {
@@ -43,6 +46,8 @@ public class UserService implements UserServiceinterface {
                 response.put("data", Map.of(
                         "email", existingUser.getEmail(),
                         "name", existingUser.getName()
+
+
                 ));
                 return ResponseEntity.status(HttpStatus.OK).body(response);
             } else {
@@ -53,10 +58,13 @@ public class UserService implements UserServiceinterface {
             }
         }
 
+
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         // Nếu user chưa tồn tại → tạo mới
         String code = mailService.sendRandomCodeEmail(user.getEmail(),"Xác thực Email");
         user.setVerificationCode(code);
         user.setVerified(false); // chưa xác thực
+
         userRepository.save(user); // lưu user tạm vào DB
 
         response.put("message", "User tạo thành công tạm thời. Vui lòng xác thực OTP.");
@@ -70,6 +78,8 @@ public class UserService implements UserServiceinterface {
     public ResponseEntity<Map<String, Object>> verifyUser(String email, String code) {
         Map<String, Object> response = new HashMap<>();
         User user = userRepository.findByEmail(email);
+
+
 
         if (user == null) {
             response.put("message", "User không tồn tại");
@@ -92,8 +102,17 @@ public class UserService implements UserServiceinterface {
     public ResponseEntity<Map<String, Object>> login(String email, String password){
         Map<String, Object> response = new HashMap<>();
 
+
         User user = userRepository.findByEmail(email);
-        if (user == null && user.getPassword().equals(password) ) {
+        //so sánh password người dùng nhập với password đã hash
+        PasswordEncoder encoder = new BCryptPasswordEncoder(); // hoặc inject vào service
+        boolean match = encoder.matches(password, user.getPassword());
+        if (user == null) {
+            response.put("message", "Email hoặc mật khẩu không chính xác");
+            response.put("data", "error");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+        if (!match) {
             response.put("message", "Email hoặc mật khẩu chính xác");
             response.put("data", "error");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
