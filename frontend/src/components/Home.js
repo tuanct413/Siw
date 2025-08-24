@@ -1,21 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { Cloud, Sun, CloudRain, Wind, Thermometer, Droplets, Eye, Gauge } from 'lucide-react';
+import { Cloud, Sun, CloudRain, Wind, Thermometer, Droplets, Eye, Gauge, MapPin, Loader } from 'lucide-react';
+// import weatherService from '../services/weatherService'; // Uncomment nếu dùng service
+import axios from 'axios';
 import '../styles/Home.css';
-
 
 const Home = () => {
     const [currentTime, setCurrentTime] = useState(new Date());
     const [cityInput, setCityInput] = useState('');
     const [isAnimating, setIsAnimating] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
 
-    // Khởi tạo weatherData mặc định để tránh crash
+    // Khởi tạo weatherData mặc định
     const [weatherData, setWeatherData] = useState({
-        currentWeather: { city: '', temperature: '', condition: '', feelsLike: '', iconName: 'sun' },
-        weatherDetails: [],
-        forecast: [],
-        additionalInfo: [],
-        footer: { text: 'Weather App © 2025' }
+        city: '',
+        temperatureC: 0,
+        condition: '',
+        humidity: 0,
+        windKph: 0,
+        visibilityKm: 0,
+        uvIndex: 0
     });
+
+    // Danh sách các thành phố phổ biến ở Việt Nam (định dạng cho API)
+    const popularCities = [
+        'Ha Noi', 'Ho Chi Minh City', 'Da Nang', 'Hue', 
+        'Can Tho', 'Hai Phong', 'Nha Trang', 'Da Lat'
+    ];
 
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -24,57 +35,92 @@ const Home = () => {
 
     useEffect(() => {
         // Fetch thời tiết mặc định khi load trang
-        fetchWeather('Hanoi');
+        fetchWeather('Ha Noi');
+        // Thử lấy vị trí hiện tại
+        getCurrentLocation();
     }, []);
 
-  
-
-
-    const fetchWeather = async (city) => {
-        try {
-            // Thay bằng API thật nếu cần
-            // const response = await axios.get(`YOUR_WEATHER_API_URL?city=${city}`);
-            // setWeatherData(response.data);
-
-            // Dữ liệu giả lập
-            setWeatherData({
-                currentWeather: {
-                    city,
-                    temperature: '30°C',
-                    condition: 'Nắng',
-                    feelsLike: '32°C',
-                    iconName: 'sun'
+    // Lấy vị trí hiện tại của user
+    const getCurrentLocation = () => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    // Có thể dùng reverse geocoding để lấy tên thành phố từ lat/lng
+                    // Hoặc gọi API với lat/lng
+                    console.log('Current position:', latitude, longitude);
                 },
-                weatherDetails: [
-                    { iconName: 'thermometer', label: 'Nhiệt độ', value: '30°C', colorClass: 'orange-color' },
-                    { iconName: 'droplets', label: 'Độ ẩm', value: '60%', colorClass: 'blue-color' },
-                    { iconName: 'wind', label: 'Gió', value: '10 km/h', colorClass: 'green-color' },
-                    { iconName: 'eye', label: 'Tầm nhìn', value: '10 km', colorClass: 'gray-color' }
-                ],
-                forecast: [
-                    { day: 'Thứ 7', iconName: 'sun', high: '32°C', low: '26°C' },
-                    { day: 'Chủ Nhật', iconName: 'cloud', high: '30°C', low: '25°C' },
-                    { day: 'Thứ 2', iconName: 'cloud-rain', high: '28°C', low: '24°C' },
-                    { day: 'Thứ 3', iconName: 'sun', high: '31°C', low: '25°C' }
-                ],
-                additionalInfo: [
-                    { iconName: 'sun', title: 'UV Index', value: '5' },
-                    { iconName: 'wind', title: 'Wind Speed', value: '10 km/h' },
-                    { iconName: 'droplets', title: 'Humidity', value: '60%' }
-                ],
-                
-                footer: { text: 'Weather App © 2025' }
+                (error) => {
+                    console.error('Error getting location:', error);
+                }
+            );
+        }
+    };
+
+    // Gọi API thời tiết thật từ Render server
+    const fetchWeather = async (city) => {
+        setIsLoading(true);
+        setError('');
+        
+        try {
+            // URL server backend trên Render
+            const apiUrl = `https://siw.onrender.com/weather/find?local=${encodeURIComponent(city)}`;
+            console.log('🔥 Calling API:', apiUrl);
+            
+            const response = await axios.get(apiUrl, {
+                timeout: 15000, // 15 seconds timeout cho server Render
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
             });
+            
+            console.log('✅ API Response:', response.data);
+            
+            if (response.data) {
+                setWeatherData(response.data);
+                setIsAnimating(true);
+                setTimeout(() => setIsAnimating(false), 600);
+            }
         } catch (error) {
-            console.error('Error fetching weather:', error);
+            console.error('❌ API Error:', error);
+            console.log('Error details:', {
+                message: error.message,
+                status: error.response?.status,
+                data: error.response?.data,
+                url: error.config?.url
+            });
+            
+            // Hiển thị lỗi chi tiết hơn
+            let errorMessage = 'Không thể lấy thông tin thời tiết. ';
+            
+            if (error.response) {
+                // Server phản hồi với status code lỗi
+                if (error.response.status === 404) {
+                    errorMessage += 'Không tìm thấy thông tin thành phố này.';
+                } else if (error.response.status === 500) {
+                    errorMessage += 'Lỗi server, vui lòng thử lại sau.';
+                } else {
+                    errorMessage += `Lỗi ${error.response.status}: ${error.response.statusText}`;
+                }
+            } else if (error.request) {
+                // Không nhận được phản hồi từ server
+                errorMessage += 'Server Render đang khởi động, vui lòng chờ 30-60 giây và thử lại.';
+            } else {
+                // Lỗi khác
+                errorMessage += error.message;
+            }
+            
+            setError(errorMessage);
+        } finally {
+            setIsLoading(false);
         }
     };
 
     const handleSearch = () => {
         if (cityInput.trim()) {
-            setIsAnimating(true);
-            setTimeout(() => setIsAnimating(false), 600);
             fetchWeather(cityInput.trim());
+            setCityInput('');
         }
     };
 
@@ -82,23 +128,31 @@ const Home = () => {
         if (e.key === 'Enter') handleSearch();
     };
 
-    const getWeatherIcon = (iconName) => {
-        const icons = {
-            sun: <Sun className="weather-icon sun-icon" />,
-            'cloud-rain': <CloudRain className="weather-icon rain-icon" />,
-            cloud: <Cloud className="weather-icon cloud-icon" />
-        };
-        return icons[iconName] || <Sun className="weather-icon sun-icon" />;
+    const handleCitySelect = (city) => {
+        fetchWeather(city);
     };
 
-    const getDetailIcon = (iconName) => {
-        const icons = {
-            thermometer: <Thermometer className="detail-icon" />,
-            droplets: <Droplets className="detail-icon" />,
-            wind: <Wind className="detail-icon" />,
-            eye: <Eye className="detail-icon" />
-        };
-        return icons[iconName];
+    // Hàm lấy icon thời tiết dựa trên condition
+    const getWeatherIcon = (condition) => {
+        const conditionLower = condition.toLowerCase();
+        
+        if (conditionLower.includes('nắng') || conditionLower.includes('sunny')) {
+            return <Sun className="weather-icon sun-icon" />;
+        } else if (conditionLower.includes('mưa') || conditionLower.includes('rain')) {
+            return <CloudRain className="weather-icon rain-icon" />;
+        } else if (conditionLower.includes('mây') || conditionLower.includes('cloud')) {
+            return <Cloud className="weather-icon cloud-icon" />;
+        }
+        return <Sun className="weather-icon sun-icon" />;
+    };
+
+    // Hàm lấy màu sắc dựa trên nhiệt độ
+    const getTemperatureColor = (temp) => {
+        if (temp > 35) return 'temp-very-hot';
+        if (temp > 28) return 'temp-hot';
+        if (temp > 20) return 'temp-warm';
+        if (temp > 15) return 'temp-cool';
+        return 'temp-cold';
     };
 
     return (
@@ -134,37 +188,81 @@ const Home = () => {
                 </header>
 
                 <main className="main-content">
-                  <section className={`weather-card ${isAnimating ? 'animating' : ''}`}>
-    <div className="weather-header">
-        <h2 className="city-name">{weatherData.currentWeather.city}</h2>
-        <Gauge className="gauge-icon" />
-    </div>
-    <div className="current-weather">
-        {getWeatherIcon(weatherData.currentWeather.iconName)}
-        <p className="temperature">{weatherData.currentWeather.temperature}</p>
-        <p className="condition">{weatherData.currentWeather.condition}</p>
-        <p className="feels-like">Cảm giác như {weatherData.currentWeather.feelsLike}</p>
-    </div>
+                    <section className={`weather-card ${isAnimating ? 'animating' : ''}`}>
+                        <div className="weather-header">
+                            <h2 className="city-name">
+                                <MapPin className="location-icon" />
+                                {weatherData.city || 'Chưa chọn thành phố'}
+                            </h2>
+                            {isLoading && <Loader className="loading-spinner spinning" />}
+                        </div>
 
-    {/* AI Prediction / Fun Forecast Section */}
-    <section className="ai-forecast">
-        <h2>Dự đoán từ AI</h2>
-        <p>Hôm nay trời nắng, thời tiết đẹp để đi chơi! 🌞</p>
-    </section>
+                        {error && (
+                            <div className="error-message">
+                                <p>{error}</p>
+                            </div>
+                        )}
 
-    <div className="weather-details">
-        {weatherData.weatherDetails.map((item, index) => (
-            <div key={index} className="detail-card">
-                <div className={`detail-icon-container ${item.colorClass}`}>
-                    {getDetailIcon(item.iconName)}
-                </div>
-                <p className="detail-label">{item.label}</p>
-                <p className="detail-value">{item.value}</p>
-            </div>
-        ))}
-    </div>
-</section>
+                        <div className="current-weather">
+                            {getWeatherIcon(weatherData.condition)}
+                            <p className={`temperature ${getTemperatureColor(weatherData.temperatureC)}`}>
+                                {weatherData.temperatureC}°C
+                            </p>
+                            <p className="condition">{weatherData.condition}</p>
+                        </div>
 
+                        <div className="weather-details">
+                            <div className="detail-card">
+                                <div className="detail-icon-container orange-color">
+                                    <Thermometer className="detail-icon" />
+                                </div>
+                                <div className="detail-content">
+                                    <p className="detail-label">Nhiệt độ</p>
+                                    <p className="detail-value">{weatherData.temperatureC}°C</p>
+                                </div>
+                            </div>
+
+                            <div className="detail-card">
+                                <div className="detail-icon-container blue-color">
+                                    <Droplets className="detail-icon" />
+                                </div>
+                                <div className="detail-content">
+                                    <p className="detail-label">Độ ẩm</p>
+                                    <p className="detail-value">{weatherData.humidity}%</p>
+                                </div>
+                            </div>
+
+                            <div className="detail-card">
+                                <div className="detail-icon-container green-color">
+                                    <Wind className="detail-icon" />
+                                </div>
+                                <div className="detail-content">
+                                    <p className="detail-label">Gió</p>
+                                    <p className="detail-value">{weatherData.windKph} km/h</p>
+                                </div>
+                            </div>
+
+                            <div className="detail-card">
+                                <div className="detail-icon-container gray-color">
+                                    <Eye className="detail-icon" />
+                                </div>
+                                <div className="detail-content">
+                                    <p className="detail-label">Tầm nhìn</p>
+                                    <p className="detail-value">{weatherData.visibilityKm} km</p>
+                                </div>
+                            </div>
+
+                            <div className="detail-card">
+                                <div className="detail-icon-container purple-color">
+                                    <Gauge className="detail-icon" />
+                                </div>
+                                <div className="detail-content">
+                                    <p className="detail-label">Chỉ số UV</p>
+                                    <p className="detail-value">{weatherData.uvIndex}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
 
                     <section className="right-section">
                         <div className="search-section">
@@ -180,46 +278,63 @@ const Home = () => {
                                     onKeyPress={handleKeyPress}
                                     placeholder="Nhập tên thành phố..."
                                     className="search-input"
+                                    disabled={isLoading}
                                 />
-                                <button onClick={handleSearch} className="search-button">
-                                    Tìm kiếm
+                                <button 
+                                    onClick={handleSearch} 
+                                    className="search-button"
+                                    disabled={isLoading || !cityInput.trim()}
+                                >
+                                    {isLoading ? 'Đang tìm...' : 'Tìm kiếm'}
                                 </button>
                             </div>
                         </div>
 
-                        <div className="forecast-section">
-                            <h2 className="section-title">Dự báo 4 ngày</h2>
-                            <div className="forecast-grid">
-                                {weatherData.forecast.map((day, index) => (
-                                    <div key={index} className="forecast-card">
-                                        <p className="forecast-day">{day.day}</p>
-                                        <div className="forecast-icon">{getWeatherIcon(day.iconName)}</div>
-                                        <div className="forecast-temp">
-                                            <span className="temp-high">{day.high}</span>
-                                            <span className="temp-low">{day.low}</span>
-                                        </div>
-                                    </div>
+                        <div className="popular-cities-section">
+                            <h2 className="section-title">
+                                <MapPin className="section-icon" />
+                                Thành phố phổ biến
+                            </h2>
+                            <div className="popular-cities-grid">
+                                {popularCities.map((city, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => handleCitySelect(city)}
+                                        className={`city-button ${weatherData.city === city ? 'active' : ''}`}
+                                        disabled={isLoading}
+                                    >
+                                        {city}
+                                    </button>
                                 ))}
+                            </div>
+                        </div>
+
+                        {/* AI Prediction Section */}
+                        <div className="ai-forecast">
+                            <h2 className="section-title">Dự đoán từ AI</h2>
+                            <div className="ai-prediction">
+                                {weatherData.temperatureC > 30 && (
+                                    <p>🌞 Hôm nay trời nắng nóng, nhớ mang theo nước và kem chống nắng!</p>
+                                )}
+                                {weatherData.condition && weatherData.condition.toLowerCase().includes('mưa') && (
+                                    <p>🌧️ Trời có mưa, đừng quên mang theo ô khi ra ngoài!</p>
+                                )}
+                                {weatherData.humidity > 80 && (
+                                    <p>💧 Độ ẩm cao, có thể cảm thấy oi bức. Nên ở nơi thoáng mát!</p>
+                                )}
+                                {weatherData.windKph > 20 && (
+                                    <p>💨 Gió mạnh, hãy cẩn thận khi di chuyển!</p>
+                                )}
+                                {!weatherData.city && (
+                                    <p>🔍 Hãy chọn một thành phố để xem thông tin thời tiết!</p>
+                                )}
                             </div>
                         </div>
                     </section>
                 </main>
 
-                <section className="additional-info">
-                    <h2 className="section-title center">Thông tin thêm</h2>
-                    <div className="info-grid">
-                        {weatherData.additionalInfo.map((info, index) => (
-                            <div key={index} className="info-card">
-                                {getWeatherIcon(info.iconName)}
-                                <h3 className="info-title">{info.title}</h3>
-                                <p className="info-value">{info.value}</p>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-
                 <footer className="app-footer">
-                    <p>{weatherData.footer.text}</p>
+                    <p>Weather App © 2025 - Dữ liệu thời tiết cập nhật realtime</p>
                 </footer>
             </div>
         </div>

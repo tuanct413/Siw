@@ -39,7 +39,7 @@ const Login = () => {
 
         
             // 🔹 Chuyển sang Home
-            navigate('/Home');
+            navigate('/');
         } catch (error) {
             console.error("❌ Login error:", error.response?.data || error.message);
             alert(error.response?.data?.message || "Đăng nhập thất bại!");

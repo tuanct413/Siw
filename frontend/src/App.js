@@ -8,8 +8,11 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/Home" element={<Home />} />
+        {/* Mặc định vào Home */}
+        <Route path="/" element={<Home />} />
+
+        {/* Các route còn lại */}
+        <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
       </Routes>
     </Router>
