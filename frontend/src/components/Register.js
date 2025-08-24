@@ -30,7 +30,7 @@ const Register = () => {
         }
 
         try {
-            const response = await axios.post("http://localhost:8080/users/create", {
+            const response = await axios.post("https://siw.onrender.com/users/create", {
                 name: formData.name,
                 email: formData.email,
                 password: formData.password
@@ -57,7 +57,7 @@ const handleVerify = async (e) => {
         params.append('code', verifyCode);
 
         const response = await axios.post(
-            "http://localhost:8080/users/verify",
+            "https://siw.onrender.com/users/verify",
             params,
             { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
         );
