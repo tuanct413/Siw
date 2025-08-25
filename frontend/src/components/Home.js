@@ -42,6 +42,7 @@ const Home = () => {
 
     // Lấy vị trí hiện tại của user
     const getCurrentLocation = () => {
+        
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
@@ -57,65 +58,52 @@ const Home = () => {
         }
     };
 
+
+
     // Gọi API thời tiết thật từ Render server
-    const fetchWeather = async (city) => {
-        setIsLoading(true);
-        setError('');
-        
-        try {
-            // URL server backend trên Render
-            const apiUrl = `https://siw.onrender.com/weather/find?local=${encodeURIComponent(city)}`;
-            console.log('🔥 Calling API:', apiUrl);
-            
-            const response = await axios.get(apiUrl, {
-                timeout: 15000, // 15 seconds timeout cho server Render
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            console.log('✅ API Response:', response.data);
-            
-            if (response.data) {
-                setWeatherData(response.data);
-                setIsAnimating(true);
-                setTimeout(() => setIsAnimating(false), 600);
-            }
-        } catch (error) {
-            console.error('❌ API Error:', error);
-            console.log('Error details:', {
-                message: error.message,
-                status: error.response?.status,
-                data: error.response?.data,
-                url: error.config?.url
-            });
-            
-            // Hiển thị lỗi chi tiết hơn
-            let errorMessage = 'Không thể lấy thông tin thời tiết. ';
-            
-            if (error.response) {
-                // Server phản hồi với status code lỗi
-                if (error.response.status === 404) {
-                    errorMessage += 'Không tìm thấy thông tin thành phố này.';
-                } else if (error.response.status === 500) {
-                    errorMessage += 'Lỗi server, vui lòng thử lại sau.';
-                } else {
-                    errorMessage += `Lỗi ${error.response.status}: ${error.response.statusText}`;
-                }
-            } else if (error.request) {
-                // Không nhận được phản hồi từ server
-                errorMessage += 'Server Render đang khởi động, vui lòng chờ 30-60 giây và thử lại.';
-            } else {
-                // Lỗi khác
-                errorMessage += error.message;
-            }
-            
-            setError(errorMessage);
-        } finally {
-            setIsLoading(false);
+const fetchWeather = async (city) => {
+    const defaultCity = 'Yen Bai'; // city mặc định
+    const cityToFetch = city || defaultCity; // nếu city null/undefined thì dùng default
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+        const apiUrl = `https://siw.onrender.com/weather/find?local=${encodeURIComponent(cityToFetch)}`;
+        console.log('🔥 Calling API:', apiUrl);
+
+        const response = await axios.get(apiUrl, {
+            timeout: 15000,
+            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
+        });
+
+        console.log('✅ API Response:', response.data);
+
+        if (response.data) {
+            setWeatherData(response.data);
+            setIsAnimating(true);
+            setTimeout(() => setIsAnimating(false), 600);
         }
-    };
+    } catch (error) {
+        console.error('❌ API Error:', error);
+        let errorMessage = 'Không thể lấy thông tin thời tiết. ';
+
+        if (error.response) {
+            if (error.response.status === 404) errorMessage += 'Không tìm thấy thông tin thành phố này.';
+            else if (error.response.status === 500) errorMessage += 'Lỗi server, vui lòng thử lại sau.';
+            else errorMessage += `Lỗi ${error.response.status}: ${error.response.statusText}`;
+        } else if (error.request) {
+            errorMessage += 'Server Render đang khởi động, vui lòng chờ 30-60 giây và thử lại.';
+        } else {
+            errorMessage += error.message;
+        }
+
+        setError(errorMessage);
+    } finally {
+        setIsLoading(false);
+    }
+};
+
 
     const handleSearch = () => {
         if (cityInput.trim()) {
