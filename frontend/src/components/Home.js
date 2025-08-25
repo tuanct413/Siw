@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Cloud, Sun, CloudRain, Wind, Thermometer, Droplets, Eye, Gauge, MapPin, Loader } from 'lucide-react';
+import { Cloud, Sun, CloudRain, Wind, Thermometer, Droplets, Eye, Gauge, MapPin, Loader, Search, ChevronDown } from 'lucide-react';
 // import weatherService from '../services/weatherService'; // Uncomment nếu dùng service
 import axios from 'axios';
 import '../styles/Home.css';
@@ -10,6 +10,7 @@ const Home = () => {
     const [isAnimating, setIsAnimating] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const [showDropdown, setShowDropdown] = useState(false);
 
     // Khởi tạo weatherData mặc định
     const [weatherData, setWeatherData] = useState({
@@ -25,7 +26,8 @@ const Home = () => {
     // Danh sách các thành phố phổ biến ở Việt Nam (định dạng cho API)
     const popularCities = [
         'Ha Noi', 'Ho Chi Minh City', 'Da Nang', 'Hue', 
-        'Can Tho', 'Hai Phong', 'Nha Trang', 'Da Lat'
+        'Can Tho', 'Hai Phong', 'Nha Trang', 'Da Lat',
+        'Yen Bai', 'Quang Ninh', 'Lao Cai', 'Vung Tau'
     ];
 
     useEffect(() => {
@@ -40,15 +42,24 @@ const Home = () => {
         getCurrentLocation();
     }, []);
 
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (!event.target.closest('.search-container')) {
+                setShowDropdown(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     // Lấy vị trí hiện tại của user
     const getCurrentLocation = () => {
-        
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     const { latitude, longitude } = position.coords;
-                    // Có thể dùng reverse geocoding để lấy tên thành phố từ lat/lng
-                    // Hoặc gọi API với lat/lng
                     console.log('Current position:', latitude, longitude);
                 },
                 (error) => {
@@ -58,57 +69,55 @@ const Home = () => {
         }
     };
 
-
-
     // Gọi API thời tiết thật từ Render server
-const fetchWeather = async (city) => {
-    const defaultCity = 'Yen Bai'; // city mặc định
-    const cityToFetch = city || defaultCity; // nếu city null/undefined thì dùng default
+    const fetchWeather = async (city) => {
+        const defaultCity = 'Yen Bai';
+        const cityToFetch = city || defaultCity;
 
-    setIsLoading(true);
-    setError('');
+        setIsLoading(true);
+        setError('');
 
-    try {
-        const apiUrl = `https://siw.onrender.com/weather/find?local=${encodeURIComponent(cityToFetch)}`;
-        console.log('🔥 Calling API:', apiUrl);
+        try {
+            const apiUrl = `https://siw.onrender.com/weather/find?local=${encodeURIComponent(cityToFetch)}`;
+            console.log('🔥 Calling API:', apiUrl);
 
-        const response = await axios.get(apiUrl, {
-            timeout: 15000,
-            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
-        });
+            const response = await axios.get(apiUrl, {
+                timeout: 15000,
+                headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
+            });
 
-        console.log('✅ API Response:', response.data);
+            console.log('✅ API Response:', response.data);
 
-        if (response.data) {
-            setWeatherData(response.data);
-            setIsAnimating(true);
-            setTimeout(() => setIsAnimating(false), 600);
+            if (response.data) {
+                setWeatherData(response.data);
+                setIsAnimating(true);
+                setTimeout(() => setIsAnimating(false), 600);
+            }
+        } catch (error) {
+            console.error('❌ API Error:', error);
+            let errorMessage = 'Không thể lấy thông tin thời tiết. ';
+
+            if (error.response) {
+                if (error.response.status === 404) errorMessage += 'Không tìm thấy thông tin thành phố này.';
+                else if (error.response.status === 500) errorMessage += 'Lỗi server, vui lòng thử lại sau.';
+                else errorMessage += `Lỗi ${error.response.status}: ${error.response.statusText}`;
+            } else if (error.request) {
+                errorMessage += 'Server Render đang khởi động, vui lòng chờ 30-60 giây và thử lại.';
+            } else {
+                errorMessage += error.message;
+            }
+
+            setError(errorMessage);
+        } finally {
+            setIsLoading(false);
         }
-    } catch (error) {
-        console.error('❌ API Error:', error);
-        let errorMessage = 'Không thể lấy thông tin thời tiết. ';
-
-        if (error.response) {
-            if (error.response.status === 404) errorMessage += 'Không tìm thấy thông tin thành phố này.';
-            else if (error.response.status === 500) errorMessage += 'Lỗi server, vui lòng thử lại sau.';
-            else errorMessage += `Lỗi ${error.response.status}: ${error.response.statusText}`;
-        } else if (error.request) {
-            errorMessage += 'Server Render đang khởi động, vui lòng chờ 30-60 giây và thử lại.';
-        } else {
-            errorMessage += error.message;
-        }
-
-        setError(errorMessage);
-    } finally {
-        setIsLoading(false);
-    }
-};
-
+    };
 
     const handleSearch = () => {
         if (cityInput.trim()) {
             fetchWeather(cityInput.trim());
             setCityInput('');
+            setShowDropdown(false);
         }
     };
 
@@ -117,8 +126,24 @@ const fetchWeather = async (city) => {
     };
 
     const handleCitySelect = (city) => {
+        setCityInput(city);
         fetchWeather(city);
+        setShowDropdown(false);
     };
+
+    const handleInputFocus = () => {
+        setShowDropdown(true);
+    };
+
+    const handleInputChange = (e) => {
+        setCityInput(e.target.value);
+        setShowDropdown(true);
+    };
+
+    // Filter cities based on input
+    const filteredCities = popularCities.filter(city =>
+        city.toLowerCase().includes(cityInput.toLowerCase())
+    );
 
     // Hàm lấy icon thời tiết dựa trên condition
     const getWeatherIcon = (condition) => {
@@ -153,6 +178,63 @@ const fetchWeather = async (city) => {
             </div>
 
             <div className="main-container">
+                {/* Top Navigation Bar - Weather App Style */}
+                <nav className="top-nav-bar">
+                    <div className="nav-left">
+                        <div className="weather-logo">
+                            <Sun className="logo-icon" />
+                            <Cloud className="logo-cloud" />
+                        </div>
+                    </div>
+                    
+                    <div className="nav-center">
+                        <div className="search-container">
+                            <input
+                                type="text"
+                                value={cityInput}
+                                onChange={handleInputChange}
+                                onKeyPress={handleKeyPress}
+                                onFocus={handleInputFocus}
+                                placeholder="Tìm kiếm thành phố..."
+                                className="nav-search-input"
+                                disabled={isLoading}
+                            />
+                            
+                            {showDropdown && (
+                                <div className="city-dropdown">
+                                    <div className="dropdown-header">Chọn thành phố:</div>
+                                    {filteredCities.length > 0 ? (
+                                        filteredCities.map((city, index) => (
+                                            <div
+                                                key={index}
+                                                onClick={() => handleCitySelect(city)}
+                                                className={`dropdown-item ${weatherData.city === city ? 'active' : ''}`}
+                                            >
+                                                <MapPin className="dropdown-icon" />
+                                                {city}
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="dropdown-item no-results">
+                                            Không tìm thấy thành phố phù hợp
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    
+                    <div className="nav-right">
+                        <button 
+                            onClick={handleSearch}
+                            className="nav-search-button"
+                            disabled={isLoading || !cityInput.trim()}
+                        >
+                            {isLoading ? <Loader className="spinning" /> : <Search />}
+                        </button>
+                    </div>
+                </nav>
+
                 <header className="app-header">
                     <div className="clock-section">
                         <div className="date">
@@ -174,7 +256,7 @@ const fetchWeather = async (city) => {
                     <h1 className="app-title">Weather App</h1>
                     <p className="app-subtitle">Khám phá thời tiết tại nơi bạn ở một cách dễ dàng!</p>
                 </header>
-
+                            
                 <main className="main-content">
                     <section className={`weather-card ${isAnimating ? 'animating' : ''}`}>
                         <div className="weather-header">
@@ -252,54 +334,13 @@ const fetchWeather = async (city) => {
                         </div>
                     </section>
 
-                    <section className="right-section">
-                        <div className="search-section">
+                    {/* AI Prediction Section */}
+                    <section className="ai-forecast-section">
+                        <div className="ai-forecast">
                             <h2 className="section-title">
                                 <Cloud className="section-icon" />
-                                Tìm kiếm thành phố
+                                Dự đoán từ AI
                             </h2>
-                            <div className="search-container">
-                                <input
-                                    type="text"
-                                    value={cityInput}
-                                    onChange={(e) => setCityInput(e.target.value)}
-                                    onKeyPress={handleKeyPress}
-                                    placeholder="Nhập tên thành phố..."
-                                    className="search-input"
-                                    disabled={isLoading}
-                                />
-                                <button 
-                                    onClick={handleSearch} 
-                                    className="search-button"
-                                    disabled={isLoading || !cityInput.trim()}
-                                >
-                                    {isLoading ? 'Đang tìm...' : 'Tìm kiếm'}
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="popular-cities-section">
-                            <h2 className="section-title">
-                                <MapPin className="section-icon" />
-                                Thành phố phổ biến
-                            </h2>
-                            <div className="popular-cities-grid">
-                                {popularCities.map((city, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => handleCitySelect(city)}
-                                        className={`city-button ${weatherData.city === city ? 'active' : ''}`}
-                                        disabled={isLoading}
-                                    >
-                                        {city}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* AI Prediction Section */}
-                        <div className="ai-forecast">
-                            <h2 className="section-title">Dự đoán từ AI</h2>
                             <div className="ai-prediction">
                                 {weatherData.temperatureC > 30 && (
                                     <p>🌞 Hôm nay trời nắng nóng, nhớ mang theo nước và kem chống nắng!</p>
