@@ -73,6 +73,7 @@ const Home = () => {
     const fetchWeather = async (city) => {
         const defaultCity = 'Yen Bai';
         const cityToFetch = city || defaultCity;
+        
 
         setIsLoading(true);
         setError('');
