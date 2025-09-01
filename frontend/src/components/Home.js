@@ -75,6 +75,8 @@ const Home = () => {
         const cityToFetch = city || defaultCity;
         
 
+
+        
         setIsLoading(true);
         setError('');
 
