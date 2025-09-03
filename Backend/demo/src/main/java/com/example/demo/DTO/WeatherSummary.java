@@ -2,6 +2,7 @@ package com.example.demo.DTO;
 
 public class WeatherSummary {
     private String city;
+    private String country ;
     private double temperatureC;   // Nhiệt độ °C
     private String condition;      // Mưa / Nắng / Mây
     private int humidity;          // Độ ẩm %
@@ -67,7 +68,13 @@ public class WeatherSummary {
         this.uvIndex = uvIndex;
     }
 
+    public String getCountry() {
+        return country;
+    }
 
+    public void setCountry(String country) {
+        this.country = country;
+    }
 
 
 }

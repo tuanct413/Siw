@@ -6,6 +6,8 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 import jakarta.validation.constraints.Email;
 
+import javax.management.relation.Role;
+
 @Entity
 @Table(name = "Users") // tên bảng trong MySQL
 @Data  // tự động sinh getter, setter, toString, equals, hashCode
@@ -32,4 +34,13 @@ public class User {
     private boolean verified; // trạng thái xác thực
 
     private String verificationCode; // mã OTP
+
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
+    public enum Role {
+        USER,
+        ADMIN
+    }
+
 }

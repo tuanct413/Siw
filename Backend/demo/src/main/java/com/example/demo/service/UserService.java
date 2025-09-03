@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import com.example.demo.DTO.ForgotPasswordDTO;
 import com.example.demo.Implementation.UserServiceinterface;
 import com.example.demo.entity.User;
 import com.example.demo.repository.UserRepository;
@@ -64,6 +65,7 @@ public class UserService implements UserServiceinterface {
         String code = mailService.sendRandomCodeEmail(user.getEmail(),"Xác thực Email");
         user.setVerificationCode(code);
         user.setVerified(false); // chưa xác thực
+        user.setRole(User.Role.USER);
 
         userRepository.save(user); // lưu user tạm vào DB
 
@@ -90,7 +92,7 @@ public class UserService implements UserServiceinterface {
             user.setVerified(true);
             userRepository.save(user); // lưu user vào DB sau khi OTP đúng
             response.put("message", "Xác thực thành công. User đã được lưu.");
-             response.put("data", Map.of("email", user.getEmail(), "name", user.getName() ,"verify", user.isVerified() ));
+            response.put("data", Map.of("email", user.getEmail(), "name", user.getName() ,"verify", user.isVerified() ));
             return ResponseEntity.ok(response);
         } else {
             response.put("message", "Mã OTP không đúng");
@@ -121,6 +123,7 @@ public class UserService implements UserServiceinterface {
             response.put("message", "Chưa xác thực Email ");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
+
         // Login thành công
         Map<String, Object> data = new HashMap<>();
         data.put("name", user.getName());
@@ -153,5 +156,74 @@ public class UserService implements UserServiceinterface {
         }
         return response;
     }
+    public ResponseEntity<Map<String,Object>> getverfify(String email) throws MessagingException {
+        Map<String, Object> response = new HashMap<>();
+
+        // Tìm user ignore case, trim email
+        Optional<User> userOpt = userRepository.findByEmailIgnoreCase(email.trim());
+
+        if(userOpt.isEmpty()){
+            response.put("message", "Không tồn tại email này");
+            System.out.println(email);
+            response.put("data", "error");
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+        }
+
+        User user = userOpt.get(); // dùng user đã kiểm tra tồn tại
+        String code;
+
+        if(!user.isVerified()){
+            // Chưa xác thực → gửi OTP xác thực email
+            code = mailService.sendRandomCodeEmail(email, "Xác thực Email");
+            response.put("message", "User chưa xác thực. OTP đã được gửi lại để xác thực email.");
+        } else {
+            // Đã xác thực → gửi OTP để đổi mật khẩu
+            code = mailService.sendRandomCodeEmail(email, "Đổi mật khẩu");
+            response.put("message", "OTP đã được gửi để đổi mật khẩu.");
+        }
+
+        user.setVerificationCode(code);
+        userRepository.save(user);
+
+        response.put("data", Map.of(
+                "email", user.getEmail(),
+                "name", user.getName()
+        ));
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+    public ResponseEntity<Map<String, Object>> forgotPassword(ForgotPasswordDTO forgotPasswordDTO){
+        Map<String, Object> response = new HashMap<>();
+
+        String email = forgotPasswordDTO.getEmail().trim();
+        String verify = forgotPasswordDTO.getVerificationCode();
+
+        Optional<User> userOpt = userRepository.findByEmailIgnoreCase(email);
+        if (userOpt.isEmpty()) {
+            response.put("message", "Không tồn tại email này");
+            response.put("data", "error");
+            return ResponseEntity.ok(response);
+        }
+
+        Optional<User> userOptByCode = userRepository.findByVerificationCode(verify);
+        if (userOptByCode.isEmpty()) {
+            response.put("message", "OTP không đúng");
+            response.put("data", "error");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+
+        User user = userOptByCode.get();
+        user.setPassword(passwordEncoder.encode(forgotPasswordDTO.getPassword()));
+        userRepository.save(user);
+
+        response.put("message", "Xác thực thành công. đổi mật khẩu thành công.");
+        response.put("data", Map.of(
+                "email", user.getEmail(),
+                "name", user.getName(),
+                "verify", user.isVerified()
+        ));
+        return ResponseEntity.ok(response);
+    }
+
 
 }

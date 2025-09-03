@@ -1,9 +1,12 @@
 package com.example.demo.Implementation;
 
+import com.example.demo.DTO.ForgotPasswordDTO;
 import com.example.demo.entity.User;
 import jakarta.mail.MessagingException;
+import org.hibernate.type.descriptor.java.ObjectJavaType;
 import org.springframework.http.ResponseEntity;
 
+import java.lang.annotation.Repeatable;
 import java.util.List;
 import java.util.Map;
 
@@ -14,4 +17,10 @@ public interface UserServiceinterface {
     ResponseEntity<Map<String, Object>> login(String email, String password);
 
     ResponseEntity<Map<String, Object>> verifyUser(String email, String code);
+
+    ResponseEntity<Map<String,Object>> getverfify(String email) throws MessagingException;
+
+    ResponseEntity<Map<String, Object>> forgotPassword(ForgotPasswordDTO forgotPasswordDTO);
+
+
 }

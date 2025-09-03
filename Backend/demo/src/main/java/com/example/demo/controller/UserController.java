@@ -1,6 +1,8 @@
 package com.example.demo.controller;
 
+import com.example.demo.DTO.ForgotPasswordDTO;
 import com.example.demo.DTO.LoginRequestDTO;
+import com.example.demo.Implementation.WeatherServiceImp;
 import com.example.demo.entity.User;
 import com.example.demo.Implementation.UserServiceinterface;
 import com.example.demo.repository.UserRepository;
@@ -21,10 +23,12 @@ import java.util.Map;
 public class UserController {
     private final UserServiceinterface userService;
     private final JwtService jwtService;
+    private final WeatherServiceImp weatherServiceImp;
 
-    public UserController(UserServiceinterface userService,JwtService jwtService) {
+    public UserController(UserServiceinterface userService,JwtService jwtService,WeatherServiceImp weatherServiceImp) {
         this.userService = userService;
         this.jwtService = jwtService;
+        this.weatherServiceImp = weatherServiceImp;
 
     }
 
@@ -80,8 +84,25 @@ public class UserController {
     }
     @GetMapping("/getall")
     public List<User> getAllUsers(){
+
         return userService.getAllUsers();
     }
+    @GetMapping("/getlocation/{userId}")
+    public ResponseEntity<Map<String, Object>> getAllHistory(@PathVariable Long userId) {
+        return weatherServiceImp.getallhistory(userId);
+    }
+
+    @GetMapping("/v1/verify")
+    public ResponseEntity<Map<String, Object>> getVerify(@RequestParam String email) throws MessagingException {
+        return userService.getverfify(email);
+    }
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Map<String, Object>> forgotPassword(@RequestBody ForgotPasswordDTO forgotPasswordDTO) {
+        // Gọi thẳng service
+        return userService.forgotPassword(forgotPasswordDTO);
+    }
+
+
 
 
 
