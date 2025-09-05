@@ -10,7 +10,7 @@ public class LocationRequest {
     @NotBlank(message = "Country không được để trống")
     private String country;
 
-    @NotNull(message = "UserId không được để trống")
+//    @NotNull(message = "UserId không được để trống")
     private Long userId;
 
 

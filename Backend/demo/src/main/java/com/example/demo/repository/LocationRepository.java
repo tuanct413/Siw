@@ -1,6 +1,6 @@
 package com.example.demo.repository;
 
-import com.example.demo.entity.Location;
+import com.example.demo.Model.Location;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -13,7 +13,6 @@ public interface LocationRepository extends JpaRepository<Location, Long> {
     List<Location> findByUserId(Long userId);
 
     boolean existsByUserIdAndCityNameIgnoreCase(Long userId, String cityName);
-
 
 
 

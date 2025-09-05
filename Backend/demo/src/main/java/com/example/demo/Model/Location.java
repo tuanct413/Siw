@@ -1,4 +1,4 @@
-package com.example.demo.entity;
+package com.example.demo.Model;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -30,8 +30,6 @@ public class Location {
     private String country;
 
     // Mỗi location sẽ thuộc về 1 user
-
-
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false) // FK user_id

@@ -1,12 +1,11 @@
-package com.example.demo.Implementation;
+package com.example.demo.service.Implementation;
 
 import com.example.demo.DTO.ForgotPasswordDTO;
-import com.example.demo.entity.User;
+import com.example.demo.DTO.UpdateProfileDTO;
+import com.example.demo.Model.User;
 import jakarta.mail.MessagingException;
-import org.hibernate.type.descriptor.java.ObjectJavaType;
 import org.springframework.http.ResponseEntity;
 
-import java.lang.annotation.Repeatable;
 import java.util.List;
 import java.util.Map;
 
@@ -23,4 +22,8 @@ public interface UserServiceinterface {
     ResponseEntity<Map<String, Object>> forgotPassword(ForgotPasswordDTO forgotPasswordDTO);
 
 
+    ResponseEntity<Map<String,Object>> getProfile(Long token);
+
+
+    ResponseEntity<Map<String, Object>> updateUser(UpdateProfileDTO updateProfileDTO , Long userId) throws MessagingException;
 }

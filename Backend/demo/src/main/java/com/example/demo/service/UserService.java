@@ -1,8 +1,10 @@
 package com.example.demo.service;
 
 import com.example.demo.DTO.ForgotPasswordDTO;
-import com.example.demo.Implementation.UserServiceinterface;
-import com.example.demo.entity.User;
+import com.example.demo.DTO.UpdateProfileDTO;
+import com.example.demo.Model.Location;
+import com.example.demo.service.Implementation.UserServiceinterface;
+import com.example.demo.Model.User;
 import com.example.demo.repository.UserRepository;
 import jakarta.mail.MessagingException;
 import org.springframework.http.HttpStatus;
@@ -11,7 +13,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import javax.security.auth.Subject;
+import javax.swing.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,20 +76,18 @@ public class UserService implements UserServiceinterface {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-
-
     // Xác thực OTP
     public ResponseEntity<Map<String, Object>> verifyUser(String email, String code) {
         Map<String, Object> response = new HashMap<>();
         User user = userRepository.findByEmail(email);
-
-
-
         if (user == null) {
             response.put("message", "User không tồn tại");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
-
+        if(user.isVerified()){
+            response.put("message", "User Đã Verified");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
         if (code.equals(user.getVerificationCode())) {
             user.setVerified(true);
             userRepository.save(user); // lưu user vào DB sau khi OTP đúng
@@ -99,21 +99,49 @@ public class UserService implements UserServiceinterface {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
+    @Override
+    public ResponseEntity<Map<String, Object>> updateUser(UpdateProfileDTO updateProfileDTO, Long userId) throws MessagingException {
+        Map<String, Object> response = new HashMap<>();
+        Optional<User> existingUserOpt = userRepository.findById(userId);
+
+        if (existingUserOpt.isPresent()) {
+            User exitingUser = existingUserOpt.get();
+            if (!exitingUser.getId().equals(userId)) {
+                response.put("message", "Bạn không có quyền cập nhật user này");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+            exitingUser.setName(updateProfileDTO.getName());
+            if(!exitingUser.getEmail().equals(updateProfileDTO.getEmail())){
+                exitingUser.setEmail(updateProfileDTO.getEmail());
+                exitingUser.setVerified(false);
+                String code = mailService.sendRandomCodeEmail(updateProfileDTO.getEmail(),"Xác thực Email");
+                exitingUser.setVerificationCode(code);
+                userRepository.save(exitingUser);
+            }
+            response.put("message", "Cập nhật thành công");
+            response.put("data", exitingUser);
+            return ResponseEntity.ok(response);
+        }
+        else {
+            response.put("message", "Không tìm thấy user với ID: " + userId);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+    }
 
     @Override
     public ResponseEntity<Map<String, Object>> login(String email, String password){
         Map<String, Object> response = new HashMap<>();
 
-
         User user = userRepository.findByEmail(email);
         //so sánh password người dùng nhập với password đã hash
-        PasswordEncoder encoder = new BCryptPasswordEncoder(); // hoặc inject vào service
-        boolean match = encoder.matches(password, user.getPassword());
+
         if (user == null) {
             response.put("message", "Email hoặc mật khẩu không chính xác");
             response.put("data", "error");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
+        PasswordEncoder encoder = new BCryptPasswordEncoder(); // hoặc inject vào service
+        boolean match = encoder.matches(password, user.getPassword());
         if (!match) {
             response.put("message", "Email hoặc mật khẩu chính xác");
             response.put("data", "error");
@@ -204,14 +232,12 @@ public class UserService implements UserServiceinterface {
             response.put("data", "error");
             return ResponseEntity.ok(response);
         }
-
         Optional<User> userOptByCode = userRepository.findByVerificationCode(verify);
         if (userOptByCode.isEmpty()) {
             response.put("message", "OTP không đúng");
             response.put("data", "error");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
-
         User user = userOptByCode.get();
         user.setPassword(passwordEncoder.encode(forgotPasswordDTO.getPassword()));
         userRepository.save(user);
@@ -224,6 +250,21 @@ public class UserService implements UserServiceinterface {
         ));
         return ResponseEntity.ok(response);
     }
+    public ResponseEntity<Map<String,Object>> getProfile(Long userId) {
+        Map<String, Object> response = new HashMap<>();
 
+        Optional<User> userOpt = userRepository.findById(userId);
 
+        if (userOpt.isEmpty()) {
+            response.put("message", "Không tìm thấy user với ID: " + userId);
+            response.put("data", null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+
+        User user = userOpt.get();
+        response.put("message", "Thành công");
+        response.put("data", user); // hoặc map sang DTO nếu muốn giấu bớt thông tin nhạy cảm
+
+        return ResponseEntity.ok(response);
+    }
 }

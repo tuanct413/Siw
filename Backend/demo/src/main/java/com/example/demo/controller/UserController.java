@@ -1,16 +1,18 @@
 package com.example.demo.controller;
 
+import com.example.demo.DTO.CustomUserDetails;
 import com.example.demo.DTO.ForgotPasswordDTO;
 import com.example.demo.DTO.LoginRequestDTO;
-import com.example.demo.Implementation.WeatherServiceImp;
-import com.example.demo.entity.User;
-import com.example.demo.Implementation.UserServiceinterface;
-import com.example.demo.repository.UserRepository;
+import com.example.demo.DTO.UpdateProfileDTO;
+import com.example.demo.service.Implementation.WeatherServiceImp;
+import com.example.demo.Model.User;
+import com.example.demo.service.Implementation.UserServiceinterface;
 import com.example.demo.service.JwtService;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -76,7 +78,6 @@ public class UserController {
             Map<String, Object> response = new HashMap<>();
             response.put("message", result.getAllErrors().get(0).getDefaultMessage());
             response.put("data", null);
-
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
@@ -87,10 +88,22 @@ public class UserController {
 
         return userService.getAllUsers();
     }
-    @GetMapping("/getlocation/{userId}")
-    public ResponseEntity<Map<String, Object>> getAllHistory(@PathVariable Long userId) {
+    @GetMapping("/getlocation")
+    public ResponseEntity<Map<String, Object>> getAllHistory(Authentication authentication) {
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        Long userId = userDetails.getUserId(); // Lấy userId dễ dàng
         return weatherServiceImp.getallhistory(userId);
     }
+    @PostMapping("/update")
+    public ResponseEntity<Map<String,Object>> updateUser(@Valid @RequestBody UpdateProfileDTO dto,
+                                                         Authentication authentication) throws MessagingException {
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        Long userId = userDetails.getUserId();
+
+        return userService.updateUser(dto, userId);
+    }
+
+
 
     @GetMapping("/v1/verify")
     public ResponseEntity<Map<String, Object>> getVerify(@RequestParam String email) throws MessagingException {
@@ -101,6 +114,15 @@ public class UserController {
         // Gọi thẳng service
         return userService.forgotPassword(forgotPasswordDTO);
     }
+    @GetMapping("/profile")
+    public ResponseEntity<Map<String,Object>> getProfile(Authentication authentication) {
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        Long userId = userDetails.getUserId(); // lấy id từ custom details
+        return userService.getProfile(userId);
+    }
+
+
+
 
 
 

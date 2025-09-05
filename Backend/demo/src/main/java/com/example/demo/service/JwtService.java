@@ -4,6 +4,7 @@ package com.example.demo.service;
 import com.example.demo.config.Jwtconfig;
 import io.jsonwebtoken.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
@@ -11,6 +12,7 @@ import java.util.Base64;
 import java.util.Date;
 
 import io.jsonwebtoken.security.Keys;
+import org.springframework.web.server.ResponseStatusException;
 
 
 @Service
@@ -54,25 +56,15 @@ public class JwtService {
         }
     }
 
-    private Claims parseToken(String token) {
-        try {
-            return Jwts.parserBuilder()
-                    .setSigningKey(key)
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody();
-        } catch (ExpiredJwtException e) {
-            throw new RuntimeException("Token đã hết hạn", e);
-        } catch (MalformedJwtException e) {
-            throw new RuntimeException("Token không hợp lệ", e);
-        } catch (SignatureException e) {
-            throw new RuntimeException("Chữ ký token không đúng", e);
-        } catch (UnsupportedJwtException e) {
-            throw new RuntimeException("Token không được hỗ trợ", e);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Token rỗng hoặc null", e);
-        }
+    public Claims parseToken(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
+
+
 
     // Method isTokenExpired - nhận String parameter
     private boolean isTokenExpired(String token) {
@@ -83,6 +75,17 @@ public class JwtService {
             return true; // Nếu có lỗi thì coi như expired
         }
     }
+    // Lấy userId từ token
+    public Long extractUserId(String token) {
+        Claims claims = parseToken(token);
+        String subject = claims.getSubject(); // vì khi generateToken bạn setSubject(userid)
+        try {
+            return Long.parseLong(subject);
+        } catch (NumberFormatException e) {
+            throw new RuntimeException("UserId trong token không hợp lệ", e);
+        }
+    }
+
 
 }
 

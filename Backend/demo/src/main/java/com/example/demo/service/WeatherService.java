@@ -2,9 +2,9 @@ package com.example.demo.service;
 
 import com.example.demo.DTO.LocationRequest;
 import com.example.demo.DTO.WeatherSummary;
-import com.example.demo.Implementation.WeatherServiceImp;
-import com.example.demo.entity.Location;
-import com.example.demo.entity.User;
+import com.example.demo.service.Implementation.WeatherServiceImp;
+import com.example.demo.Model.Location;
+import com.example.demo.Model.User;
 import com.example.demo.repository.LocationRepository;
 import com.example.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.*;
 
 @Service
@@ -118,5 +117,27 @@ public class WeatherService implements WeatherServiceImp {
         response.put("data", locations);
         return ResponseEntity.ok(response);
     }
+    public Map<String, Object> deleteWeather(Long id, Long userId) {
+        Map<String, Object> response = new HashMap<>();
+
+        Optional<Location> locationOpt = locationRepository.findById(id);
+
+        if(locationOpt.isPresent()) {
+            Location location = locationOpt.get();
+
+            if(location.getUser().getId().equals(userId)) {
+                locationRepository.deleteById(id);
+                response.put("message", "Xóa thành công");
+            } else {
+                response.put("message", "Bạn không có quyền xóa bản ghi này");
+            }
+        } else {
+            response.put("message", "Không tìm thấy bản ghi với ID: " + id);
+        }
+
+        return response;
+    }
+
+
 
 }
