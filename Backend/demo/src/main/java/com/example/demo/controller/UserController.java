@@ -9,6 +9,7 @@ import com.example.demo.Model.User;
 import com.example.demo.service.Implementation.UserServiceinterface;
 import com.example.demo.service.JwtService;
 import jakarta.mail.MessagingException;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -73,16 +74,21 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@Valid @RequestBody LoginRequestDTO request, BindingResult result) {
+    public ResponseEntity<Map<String, Object>> login(
+            @Valid @RequestBody LoginRequestDTO request,
+            BindingResult result,
+            HttpServletResponse response) {
+
         if (result.hasErrors()) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", result.getAllErrors().get(0).getDefaultMessage());
-            response.put("data", null);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            Map<String, Object> res = new HashMap<>();
+            res.put("message", result.getAllErrors().get(0).getDefaultMessage());
+            res.put("data", null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
         }
 
-        return userService.login(request.getEmail(), request.getPassword());
+        return userService.login(request.getEmail(), request.getPassword(), response);
     }
+
     @GetMapping("/getall")
     public List<User> getAllUsers(){
 
@@ -94,7 +100,7 @@ public class UserController {
         Long userId = userDetails.getUserId(); // Lấy userId dễ dàng
         return weatherServiceImp.getallhistory(userId);
     }
-    @PostMapping("/update")
+    @PatchMapping("/update")
     public ResponseEntity<Map<String,Object>> updateUser(@Valid @RequestBody UpdateProfileDTO dto,
                                                          Authentication authentication) throws MessagingException {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();

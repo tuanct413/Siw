@@ -7,7 +7,10 @@ import com.example.demo.service.Implementation.UserServiceinterface;
 import com.example.demo.Model.User;
 import com.example.demo.repository.UserRepository;
 import jakarta.mail.MessagingException;
+import jakarta.servlet.http.HttpServletResponse;
+
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -128,40 +131,55 @@ public class UserService implements UserServiceinterface {
         }
     }
 
-    @Override
-    public ResponseEntity<Map<String, Object>> login(String email, String password){
-        Map<String, Object> response = new HashMap<>();
+   @Override
+    public ResponseEntity<Map<String, Object>> login(String email, String password, HttpServletResponse response) {
+        Map<String, Object> res = new HashMap<>();
 
         User user = userRepository.findByEmail(email);
-        //so sánh password người dùng nhập với password đã hash
-
         if (user == null) {
-            response.put("message", "Email hoặc mật khẩu không chính xác");
-            response.put("data", "error");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            res.put("message", "Email hoặc mật khẩu không chính xác");
+            res.put("data", "error");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
         }
-        PasswordEncoder encoder = new BCryptPasswordEncoder(); // hoặc inject vào service
+
+        PasswordEncoder encoder = new BCryptPasswordEncoder();
         boolean match = encoder.matches(password, user.getPassword());
         if (!match) {
-            response.put("message", "Email hoặc mật khẩu chính xác");
-            response.put("data", "error");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-        }
-        if(!user.isVerified()){
-            response.put("message", "Chưa xác thực Email ");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            res.put("message", "Email hoặc mật khẩu không chính xác");
+            res.put("data", "error");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
         }
 
-        // Login thành công
+        if (!user.isVerified()) {
+            res.put("message", "Chưa xác thực Email");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
+        }
+
+        // 🔹 Login thành công
+        String token = jwtService.generateToken(user.getId(), user.getEmail());
+
+        // Tạo cookie HttpOnly
+        ResponseCookie cookie = ResponseCookie.from("token", token)
+                .httpOnly(true)
+                .secure(false)   // để dev = false, deploy HTTPS thì true
+                .path("/")
+                .maxAge(24 * 60 * 60) // 1 ngày
+                .sameSite("Strict")
+                .build();
+
+        // Gắn cookie vào response
+        response.setHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+        // Trả dữ liệu user (không trả token trong body nữa)
         Map<String, Object> data = new HashMap<>();
         data.put("name", user.getName());
         data.put("email", user.getEmail());
-        String token = jwtService.generateToken(user.getId(), user.getEmail());
-        response.put("message", "Đăng nhập thành công");
-        response.put("data", data);
-        response.put("token",token);
-        return ResponseEntity.ok(response);
+
+        res.put("message", "Đăng nhập thành công");
+        res.put("data", data);
+        return ResponseEntity.ok(res);
     }
+
 
     @Override
     public List<User> getAllUsers() {

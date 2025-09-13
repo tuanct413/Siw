@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Cloud, Sun, CloudRain, Wind, Thermometer, Droplets, Eye, Gauge, MapPin, Loader, Search, ChevronDown } from 'lucide-react';
+import { Cloud, Sun, CloudRain, Wind, Thermometer, Droplets, Eye, Gauge, MapPin, Loader, Search, ChevronDown, User, LogIn, UserPlus, Settings, LogOut } from 'lucide-react';
 // import weatherService from '../services/weatherService'; // Uncomment nếu dùng service
 import axios from 'axios';
 import '../styles/Home.css';
@@ -11,6 +11,11 @@ const Home = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [showDropdown, setShowDropdown] = useState(false);
+    
+    // User dropdown states
+    const [showUserDropdown, setShowUserDropdown] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [userInfo, setUserInfo] = useState({ name: '', email: '' });
 
     // Khởi tạo weatherData mặc định
     const [weatherData, setWeatherData] = useState({
@@ -40,19 +45,76 @@ const Home = () => {
         fetchWeather('Ha Noi');
         // Thử lấy vị trí hiện tại
         getCurrentLocation();
+        
+        // Kiểm tra trạng thái đăng nhập từ localStorage
+        checkLoginStatus();
     }, []);
 
-    // Close dropdown when clicking outside
+    // Close dropdowns when clicking outside
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (!event.target.closest('.search-container')) {
                 setShowDropdown(false);
+            }
+            if (!event.target.closest('.user-dropdown-container')) {
+                setShowUserDropdown(false);
             }
         };
 
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    // Kiểm tra trạng thái đăng nhập
+    const checkLoginStatus = () => {
+        const savedUser = localStorage.getItem('userInfo');
+        if (savedUser) {
+            const user = JSON.parse(savedUser);
+            setIsLoggedIn(true);
+            setUserInfo(user);
+        }
+    };
+
+    // Hàm đăng nhập demo
+    const handleLogin = () => {
+        // Demo login - trong thực tế sẽ kết nối API
+        const demoUser = {
+            name: 'Nguyễn Văn A',
+            email: 'user@example.com',
+            avatar: null
+        };
+        
+        setIsLoggedIn(true);
+        setUserInfo(demoUser);
+        localStorage.setItem('userInfo', JSON.stringify(demoUser));
+        setShowUserDropdown(false);
+        
+        // Có thể thêm notification/toast ở đây
+        console.log('Đăng nhập thành công!');
+    };
+
+    // Hàm đăng xuất
+    const handleLogout = () => {
+        setIsLoggedIn(false);
+        setUserInfo({ name: '', email: '' });
+        localStorage.removeItem('userInfo');
+        setShowUserDropdown(false);
+        
+        console.log('Đăng xuất thành công!');
+    };
+
+    // Hàm đăng ký demo
+    const handleRegister = () => {
+        // Demo register - trong thực tế sẽ mở modal hoặc chuyển trang
+        console.log('Chuyển đến trang đăng ký');
+        setShowUserDropdown(false);
+    };
+
+    // Hàm cài đặt tài khoản
+    const handleSettings = () => {
+        console.log('Mở trang cài đặt tài khoản');
+        setShowUserDropdown(false);
+    };
 
     // Lấy vị trí hiện tại của user
     const getCurrentLocation = () => {
@@ -74,14 +136,11 @@ const Home = () => {
         const defaultCity = 'Yen Bai';
         const cityToFetch = city || defaultCity;
         
-
-
-        
         setIsLoading(true);
         setError('');
 
         try {
-            const apiUrl = `https://siw.onrender.com/weather/find?local=${encodeURIComponent(cityToFetch)}`;
+            const apiUrl = `http://localhost:8080/weather/find?local=${encodeURIComponent(cityToFetch)}`;
             console.log('🔥 Calling API:', apiUrl);
 
             const response = await axios.get(apiUrl, {
@@ -235,6 +294,70 @@ const Home = () => {
                         >
                             {isLoading ? <Loader className="spinning" /> : <Search />}
                         </button>
+
+                        {/* User Dropdown Menu */}
+                        <div className="user-dropdown-container">
+                            <button 
+                                className="user-menu-button"
+                                onClick={() => setShowUserDropdown(!showUserDropdown)}
+                            >
+                                <User className="user-icon" />
+                                {isLoggedIn && <span className="user-name">{userInfo.name.split(' ')[0]}</span>}
+                                <ChevronDown className={`chevron-icon ${showUserDropdown ? 'rotate' : ''}`} />
+                            </button>
+
+                            {showUserDropdown && (
+                                <div className="user-dropdown">
+                                    {isLoggedIn ? (
+                                        // Menu khi đã đăng nhập
+                                        <>
+                                            <div className="user-info">
+                                                <div className="user-avatar">
+                                                    <User className="avatar-icon" />
+                                                </div>
+                                                <div className="user-details">
+                                                    <div className="user-display-name">{userInfo.name}</div>
+                                                    <div className="user-email">{userInfo.email}</div>
+                                                </div>
+                                            </div>
+                                            <div className="dropdown-divider"></div>
+                                            <button 
+                                                className="dropdown-menu-item"
+                                                onClick={handleSettings}
+                                            >
+                                                <Settings className="menu-icon" />
+                                                Cài đặt tài khoản
+                                            </button>
+                                            <button 
+                                                className="dropdown-menu-item logout-item"
+                                                onClick={handleLogout}
+                                            >
+                                                <LogOut className="menu-icon" />
+                                                Đăng xuất
+                                            </button>
+                                        </>
+                                    ) : (
+                                        // Menu khi chưa đăng nhập
+                                        <>
+                                            <button 
+                                                className="dropdown-menu-item login-item"
+                                                onClick={handleLogin}
+                                            >
+                                                <LogIn className="menu-icon" />
+                                                Đăng nhập
+                                            </button>
+                                            <button 
+                                                className="dropdown-menu-item register-item"
+                                                onClick={handleRegister}
+                                            >
+                                                <UserPlus className="menu-icon" />
+                                                Đăng ký
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </nav>
 

@@ -25,18 +25,18 @@ const Login = () => {
         setIsLoading(true);
 
         try {
-            const response = await axios.post("https://siw.onrender.com/users/login", {
+            const response = await axios.post("http://localhost:8080/users/login", {
                 email: formData.email,
                 password: formData.password
-            });
+            },
+            {
+                    withCredentials:true //cho phép axios gửi/nhận cookie
+            }
+        );
 
-            console.log("✅ Login success:", response.data);
 
             // Nếu backend trả JWT thì lưu vào localStorage
-            if (response.data.token) {
-                localStorage.setItem("token", response.data.token);
-            }
-
+    
         
             // 🔹 Chuyển sang Home
             navigate('/');

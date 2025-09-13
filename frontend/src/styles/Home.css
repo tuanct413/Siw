@@ -763,3 +763,123 @@ body {
         font-size: 12px;
     }
 }
+/* User Dropdown Styles */
+.user-dropdown-container {
+  position: relative;
+  margin-left: 10px;
+}
+
+.user-menu-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.user-menu-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.chevron-icon {
+  transition: transform 0.3s ease;
+}
+
+.chevron-icon.rotate {
+  transform: rotate(180deg);
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  min-width: 250px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  background: #f8f9fa;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  background: #007bff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+}
+
+.avatar-icon {
+  color: white;
+  width: 20px;
+  height: 20px;
+}
+
+.user-display-name {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.user-email {
+  color: #666;
+  font-size: 12px;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: #eee;
+}
+
+.dropdown-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.dropdown-menu-item:hover {
+  background: #f8f9fa;
+}
+
+.dropdown-menu-item.login-item:hover {
+  background: rgba(0, 123, 255, 0.1);
+  color: #007bff;
+}
+
+.dropdown-menu-item.register-item:hover {
+  background: rgba(40, 167, 69, 0.1);
+  color: #28a745;
+}
+
+.dropdown-menu-item.logout-item:hover {
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+}
+
+.menu-icon {
+  width: 16px;
+  height: 16px;
+}
