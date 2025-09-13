@@ -4,7 +4,7 @@ import com.example.demo.DTO.CustomUserDetails;
 import com.example.demo.DTO.ForgotPasswordDTO;
 import com.example.demo.DTO.LoginRequestDTO;
 import com.example.demo.DTO.UpdateProfileDTO;
-import com.example.demo.service.Implementation.WeatherServiceImp;
+import com.example.demo.service.Implementation.WeatherServiceInterface;
 import com.example.demo.Model.User;
 import com.example.demo.service.Implementation.UserServiceinterface;
 import com.example.demo.service.JwtService;
@@ -26,9 +26,9 @@ import java.util.Map;
 public class UserController {
     private final UserServiceinterface userService;
     private final JwtService jwtService;
-    private final WeatherServiceImp weatherServiceImp;
+    private final WeatherServiceInterface weatherServiceImp;
 
-    public UserController(UserServiceinterface userService,JwtService jwtService,WeatherServiceImp weatherServiceImp) {
+    public UserController(UserServiceinterface userService, JwtService jwtService, WeatherServiceInterface weatherServiceImp) {
         this.userService = userService;
         this.jwtService = jwtService;
         this.weatherServiceImp = weatherServiceImp;
@@ -108,9 +108,6 @@ public class UserController {
 
         return userService.updateUser(dto, userId);
     }
-
-
-
     @GetMapping("/v1/verify")
     public ResponseEntity<Map<String, Object>> getVerify(@RequestParam String email) throws MessagingException {
         return userService.getverfify(email);
@@ -126,13 +123,5 @@ public class UserController {
         Long userId = userDetails.getUserId(); // lấy id từ custom details
         return userService.getProfile(userId);
     }
-
-
-
-
-
-
-
-
 
 }

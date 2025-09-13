@@ -2,11 +2,11 @@ package com.example.demo.service;
 
 import com.example.demo.DTO.LocationRequest;
 import com.example.demo.DTO.WeatherSummary;
-import com.example.demo.service.Implementation.WeatherServiceImp;
 import com.example.demo.Model.Location;
 import com.example.demo.Model.User;
 import com.example.demo.repository.LocationRepository;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.service.Implementation.WeatherServiceInterface;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +17,7 @@ import java.time.LocalDate;
 import java.util.*;
 
 @Service
-public class WeatherService implements WeatherServiceImp {
+public class WeatherService implements WeatherServiceInterface {
 
     private final RestTemplate restTemplate = new RestTemplate();
 

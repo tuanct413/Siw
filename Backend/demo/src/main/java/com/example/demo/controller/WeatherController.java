@@ -2,7 +2,7 @@ package com.example.demo.controller;
 import com.example.demo.DTO.CustomUserDetails;
 import com.example.demo.DTO.LocationRequest;
 import com.example.demo.DTO.WeatherSummary;
-import com.example.demo.service.Implementation.WeatherServiceImp;
+import com.example.demo.service.Implementation.WeatherServiceInterface;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,9 +17,9 @@ import java.util.Map;
 @RestController
 @RequestMapping("/weather")
 public class WeatherController {
-    private final WeatherServiceImp weatherServiceImp;
+    private final WeatherServiceInterface weatherServiceImp;
 
-    public WeatherController(WeatherServiceImp weatherServiceImp ) {
+    public WeatherController(WeatherServiceInterface weatherServiceImp ) {
         this.weatherServiceImp = weatherServiceImp;
     }
     @GetMapping("/find")

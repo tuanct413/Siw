@@ -9,6 +9,7 @@ import com.example.demo.repository.UserRepository;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -164,7 +165,7 @@ public class UserService implements UserServiceinterface {
                 .secure(false)   // để dev = false, deploy HTTPS thì true
                 .path("/")
                 .maxAge(24 * 60 * 60) // 1 ngày
-                .sameSite("Strict")
+                  .sameSite("Lax") 
                 .build();
 
         // Gắn cookie vào response
@@ -175,7 +176,10 @@ public class UserService implements UserServiceinterface {
         data.put("name", user.getName());
         data.put("email", user.getEmail());
 
+        
+
         res.put("message", "Đăng nhập thành công");
+        res.put("token",token);
         res.put("data", data);
         return ResponseEntity.ok(res);
     }

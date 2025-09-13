@@ -38,14 +38,17 @@ public class WebSecurityConfig {
                         .requestMatchers("/users/forgot-password").permitAll()
                         .requestMatchers("/users/v1/verify").permitAll()
 
-                        // Các request còn lại cần JWT
+                        // Reports API: cần token
+                        .requestMatchers("/api/reports/**").authenticated()
+
+                        // Các request còn lại cũng cần token
                         .anyRequest().authenticated()
                 )
-
 
                 // Thêm JWT Filter trước UsernamePasswordAuthenticationFilter
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
+
 }

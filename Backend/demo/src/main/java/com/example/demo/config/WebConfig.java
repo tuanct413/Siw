@@ -16,6 +16,7 @@ public class WebConfig {
                 registry.addMapping("/**")           // Áp dụng cho tất cả endpoint
                         .allowedOrigins(
                             "http://localhost:3000", 
+                            "http://localhost:3001", 
                             "https://siwsomething.netlify.app", //ftonend
                             "https://siw.onrender.com" // onrender.com
                         )
