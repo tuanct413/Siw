@@ -16,7 +16,8 @@ public interface ReportInterface {
     /// Lấy tất cả các report của tất cả User
      ResponseEntity<ApiResponse<PagedResponse<Report>>> getAllReports(int page, int size);
 //    /// Lấy một report bất kì qua idreport
-//    Report getReportById(Long id);
+    ResponseEntity<ApiResponse<Report>> getReportById(Long id);
 //    /// xóa một report bất kì qua idreport
-//    boolean deleteReport(Long id);
+    ResponseEntity<ApiResponse<Boolean>> deleteReport(Long id,Long userId);
+
 }

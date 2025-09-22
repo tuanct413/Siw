@@ -13,6 +13,10 @@ public class LocationRequest {
 //    @NotNull(message = "UserId không được để trống")
     private Long userId;
 
+    public LocationRequest(String cityName, String country) {
+        this.cityName = cityName;
+        this.country = country;
+    }
 
     public String getCountry() {
         return country;

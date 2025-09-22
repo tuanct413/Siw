@@ -1,18 +1,21 @@
 package com.example.demo.service;
 
-import com.example.demo.DTO.LocationRequest;
-import com.example.demo.DTO.WeatherSummary;
+import com.example.demo.DTO.*;
 import com.example.demo.Model.Location;
+import com.example.demo.Model.Report;
 import com.example.demo.Model.User;
 import com.example.demo.repository.LocationRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.Implementation.WeatherServiceInterface;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 
+import javax.swing.*;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -29,6 +32,9 @@ public class WeatherService implements WeatherServiceInterface {
 
     @Value("${weather.api.url}")
     private String apiUrl;
+
+    @Value("${weather.api.url1}")
+    private String apiurl7Day;
 
     public WeatherService(LocationRepository locationRepository  , UserRepository userRepository) {
         this.locationRepository = locationRepository;
@@ -47,6 +53,51 @@ public class WeatherService implements WeatherServiceInterface {
             String fallbackUrl = apiUrl + "?key=" + apiKey + "&q=" + defaultCity + "&aqi=no";
             return fetchWeather(fallbackUrl);
         }
+    }
+
+    @Override
+    public ApiResponse<Map<String, Object>> setWeatherAlert(Long userId, String city, String condition) {
+        WeatherSummary weather = getWeather(city);
+        boolean alertweather = false;
+        boolean alerttemperature = false;
+        String weatherMessage = "";
+        String temperatureMessage="";
+        double temp = weather.getTemperatureC(); // lấy thời tiết hiện tại
+
+        if(temp < 10){
+            alerttemperature = true;
+            temperatureMessage= "thời tiết đang rất Lạnh nên mắc áo ấm " +city ;
+        }
+        else if(temp > 30 ){
+            alerttemperature = true;
+            temperatureMessage= "thời tiết đang khá nóng hạn chế ra đường " +city ;
+        }
+        else if (temp >= 20 && temp <= 30 ){
+            alerttemperature = true;
+            temperatureMessage= "thời tiết quá đẹp " +city ;
+        }
+        // Cảnh báo điều kiện thời tiết
+        if(weather.getCondition().toLowerCase().contains(condition.toLowerCase())){
+            alertweather = true;
+            weatherMessage = "Cảnh báo: Thời tiết tại " + city + " hiện tại có " + condition;
+        }
+        else {
+            weatherMessage = "Chưa có cảnh báo. Điều kiện '" + condition + "' chưa xảy ra ở " + city;
+        }
+        Map<String, Object> data = new HashMap<>();
+        data.put("city", weather.getCity());
+        data.put("country", weather.getCountry());
+        data.put("temperature", weather.getTemperatureC());
+        data.put("condition", weather.getCondition());
+        data.put("alertweather", alertweather );
+        data.put("weatherMessage",weatherMessage);
+        data.put("temperatureMessage",temperatureMessage);
+        data.put("alertTemperature",alerttemperature);
+        return new ApiResponse<>(
+                "lấy thành công",
+                data
+        );
+
     }
     private WeatherSummary fetchWeather(String url) {
         Map<String, Object> response = restTemplate.getForObject(url, Map.class);
@@ -138,6 +189,97 @@ public class WeatherService implements WeatherServiceInterface {
         return response;
     }
 
+    public List<WeatherForecastDTO> get7dayForecast(String city) {
+        if (city == null || city.trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "City không được để trống!");
+        }
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            String url = apiurl7Day + "?key=" + apiKey + "&q=" + city + "&days=14";
+            JsonNode root = restTemplate.getForObject(url, JsonNode.class);
 
+            // Debug xem trả về gì
+
+            JsonNode forecastDays = root.path("forecast").path("forecastday");
+            if (forecastDays.isMissingNode() || !forecastDays.isArray()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Không có dữ liệu forecast cho city: " + city);
+            }
+
+            List<WeatherForecastDTO> result = new ArrayList<>();
+            int index = 0;
+            for (JsonNode node : forecastDays) {
+                if (index == 0) { // bỏ qua ngày hôm nay
+                    index++;
+                    continue;
+                }
+                WeatherForecastDTO dto = new WeatherForecastDTO();
+                dto.setDate(node.path("date").asText());
+                dto.setMaxtemp_c(node.path("day").path("maxtemp_c").asDouble());
+                dto.setMintemp_c(node.path("day").path("mintemp_c").asDouble());
+                dto.setAvgtemp_c(node.path("day").path("avgtemp_c").asDouble());
+                dto.setDaily_chance_of_rain(node.path("day").path("daily_chance_of_rain").asInt());
+                dto.setTotalprecip_mm(node.path("day").path("totalprecip_mm").asDouble());
+                result.add(dto);
+            }
+            return result;
+
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Không lấy được dữ liệu thời tiết: " + e.getMessage());
+        }
+    }
+    public ApiResponse<List<LocationRequest>> getFavoriteLocations(Long userId) {
+        List<Location> locations = locationRepository.findByUserId(userId);
+
+        // convert entity -> DTO
+        List<LocationRequest> dtoList = locations.stream()
+                .map(loc -> new LocationRequest(loc.getCityName(), loc.getCountry()))
+                .toList();
+
+        return new ApiResponse<>(
+                "Lấy danh sách thành công",
+                dtoList
+        );
+    }
+    @Override
+    public ApiResponse<Map<String, Object>> compareWeather(String city1, String city2){
+        WeatherSummary weather1 = getWeather(city1);
+        WeatherSummary weather2 = getWeather(city2);
+
+        ArrayList<WeatherSummary> cities = new ArrayList<>();
+        ArrayList<String> rainingCities = new ArrayList<>();
+        cities.add(weather1);
+        cities.add(weather2);
+        String messger = "";
+        String messgerCondition = "";
+        for (WeatherSummary  w  : cities){
+            if (w.getCondition().toLowerCase().contains("rain")) {
+                rainingCities.add(w.getCity());
+            }
+        }
+        for(int i = 0 ; i < cities.size() - 1 ;i++ ){
+            WeatherSummary index1 = cities.get(i);
+            WeatherSummary index2 = cities.get(i + 1);
+            double temp1 = index1.getTemperatureC();
+            double temp2 = index2.getTemperatureC();
+            if(temp1 > temp2){
+                messger=( index1.getCity() + " nóng hơn " + index2.getCity());
+            }
+            else if (temp1 < temp2) {
+                messger=( index2.getCity() + " nóng hơn " + index1.getCity());
+            } else {
+                System.out.println(index2.getCity() + " và " + index1.getCity() + " có cùng nhiệt độ");
+            }
+        }
+        if (!rainingCities.isEmpty()) {
+            messgerCondition=("Các thành phố đang mưa: " + String.join(", ", rainingCities));
+        }
+        Map<String, Object> data = new HashMap<>();
+           data.put("messgersTemperatureC",messger);
+           data.put("messgerCondition",messgerCondition);
+           return new  ApiResponse<>(
+                   "lấy thành công",
+                   data
+           );
+    }
 
 }

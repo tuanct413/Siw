@@ -106,10 +106,29 @@ public class ReportService implements ReportInterface {
     }
 //    /// Lấy một report bất kì qua idreport
 //    public  Report getReportById(Long id){
-//
-//    }
+        public ResponseEntity<ApiResponse<Report>> getReportById(Long id){
+            Optional<Report> optionalReport = reportRepository.findById(id);
+            if(optionalReport.isEmpty()){
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse<>("Report Không tồn tại", null));
+            }
+            Report report = optionalReport.get();
+            return  ResponseEntity.ok(new ApiResponse<>("Lấy Report Thành Công",report));
+        }
+
 //    /// xóa một report bất kì qua idreport
-//    public boolean deleteReport(Long id){
-//
-//    }
+     public ResponseEntity<ApiResponse<Boolean>> deleteReport(Long id,Long userId){
+         Optional<Report> optionalReport = reportRepository.findById(id);
+        if(optionalReport.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse<>("Report Không tồn tại", null));
+        }
+        Report report = optionalReport.get();
+        if(!report.getUser().getId().equals(userId)){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse<>("Report này bạn không có quyền xóa Không tồn tại", null));
+        }
+        reportRepository.delete(report);
+        return ResponseEntity.ok(new ApiResponse<>("xóa report  thành công ",true));
+     }
 }
