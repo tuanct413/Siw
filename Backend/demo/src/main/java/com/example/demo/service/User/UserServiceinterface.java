@@ -1,4 +1,4 @@
-package com.example.demo.service.Implementation;
+package com.example.demo.service.User;
 
 import com.example.demo.DTO.ForgotPasswordDTO;
 import com.example.demo.DTO.UpdateProfileDTO;

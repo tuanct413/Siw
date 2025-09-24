@@ -1,12 +1,10 @@
-package com.example.demo.service.Implementation;
+package com.example.demo.service.Report;
 
 import com.example.demo.DTO.ApiResponse;
 import com.example.demo.DTO.PagedResponse;
 import com.example.demo.DTO.ResponseDTO;
 import com.example.demo.Model.Report;
 import org.springframework.http.ResponseEntity;
-
-import java.util.List;
 
 public interface ReportInterface {
     /// tạo một report mới

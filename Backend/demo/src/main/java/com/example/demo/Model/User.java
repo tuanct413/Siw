@@ -29,7 +29,7 @@ public class User {
 
     @NotBlank(message = "Password Không được để trống")
     @Size(min = 6, message = "Password phải có ít nhất 6 ký tự")
-    @JsonIgnore
+
     private String password;
 
     @JsonIgnore

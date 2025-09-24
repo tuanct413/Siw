@@ -1,6 +1,6 @@
 package com.example.demo.controller;
 import com.example.demo.DTO.*;
-import com.example.demo.service.Implementation.WeatherServiceInterface;
+import com.example.demo.service.Weather.WeatherServiceInterface;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -8,7 +8,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
-import javax.swing.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +30,6 @@ public class WeatherController {
     public List<WeatherForecastDTO> get7dayForecast(@PathVariable String city){
         return weatherServiceImp.get7dayForecast(city);
     }
-
     @DeleteMapping("/remove")
     public Map<String, Object> deleteWeather(@RequestParam("id") Long id,Authentication authentication){
         CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();

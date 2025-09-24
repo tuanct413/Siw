@@ -1,5 +1,8 @@
 package com.example.demo.DTO;
 
+import lombok.Builder;
+
+
 public class WeatherSummary {
     private String city;
     private String country ;
@@ -9,6 +12,7 @@ public class WeatherSummary {
     private double windKph;        // Gió km/h
     private double visibilityKm;   // Tầm nhìn km
     private int uvIndex;           // Chỉ số UV
+
 
 
     // getters & setters

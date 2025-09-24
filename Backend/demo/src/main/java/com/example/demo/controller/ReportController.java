@@ -5,15 +5,10 @@ import com.example.demo.DTO.CustomUserDetails;
 import com.example.demo.DTO.PagedResponse;
 import com.example.demo.DTO.ResponseDTO;
 import com.example.demo.Model.Report;
-import com.example.demo.service.Implementation.ReportInterface;
-import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import com.example.demo.service.Report.ReportInterface;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/reports")

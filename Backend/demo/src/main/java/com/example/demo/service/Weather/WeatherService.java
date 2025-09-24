@@ -1,12 +1,10 @@
-package com.example.demo.service;
+package com.example.demo.service.Weather;
 
 import com.example.demo.DTO.*;
 import com.example.demo.Model.Location;
-import com.example.demo.Model.Report;
 import com.example.demo.Model.User;
 import com.example.demo.repository.LocationRepository;
 import com.example.demo.repository.UserRepository;
-import com.example.demo.service.Implementation.WeatherServiceInterface;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -15,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
-import javax.swing.*;
 import java.time.LocalDate;
 import java.util.*;
 

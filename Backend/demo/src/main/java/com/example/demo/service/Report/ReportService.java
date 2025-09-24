@@ -1,4 +1,4 @@
-package com.example.demo.service;
+package com.example.demo.service.Report;
 
 import com.example.demo.DTO.ApiResponse;
 
@@ -8,7 +8,6 @@ import com.example.demo.Model.Report;
 import com.example.demo.Model.User;
 import com.example.demo.repository.ReportRepository;
 import com.example.demo.repository.UserRepository;
-import com.example.demo.service.Implementation.ReportInterface;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -21,9 +20,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 @Service
 public class ReportService implements ReportInterface {

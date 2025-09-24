@@ -1,11 +1,11 @@
-package com.example.demo.service;
+package com.example.demo.service.User;
 
 import com.example.demo.DTO.ForgotPasswordDTO;
 import com.example.demo.DTO.UpdateProfileDTO;
-import com.example.demo.Model.Location;
-import com.example.demo.service.Implementation.UserServiceinterface;
 import com.example.demo.Model.User;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.service.JwtService;
+import com.example.demo.service.MailService;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -17,7 +17,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import javax.swing.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
