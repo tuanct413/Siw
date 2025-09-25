@@ -9,11 +9,10 @@ function App() {
     <Router>
       <Routes>
         {/* Mặc định vào Home */}
+        <Route path="/" element={<Home />} />   {/* Default */}
        <Route path="/login" element={<Login />} />
         <Route path="/home" element={<Home />} />
-
         {/* Các route còn lại */}
-    
         <Route path="/register" element={<Register />} />
       </Routes>
     </Router>
