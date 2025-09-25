@@ -1,499 +1,515 @@
-import React, { useState, useEffect } from 'react';
-import { Cloud, Sun, CloudRain, Wind, Thermometer, Droplets, Eye, Gauge, MapPin, Loader, Search, ChevronDown, User, LogIn, UserPlus, Settings, LogOut } from 'lucide-react';
-// import weatherService from '../services/weatherService'; // Uncomment nếu dùng service
-import axios from 'axios';
-import '../styles/Home.css';
+"use client"
+
+import { useState, useEffect } from "react"
+import {
+  Cloud,
+  Sun,
+  CloudRain,
+  Wind,
+  Droplets,
+  Eye,
+  Gauge,
+  MapPin,
+  Search,
+  User,
+  LogIn,
+  UserPlus,
+  Settings,
+  LogOut,
+  Menu,
+  X,
+  HomeIcon,
+  BarChart3,
+  FileText,
+  Bell,
+  Wallet,
+  Star,
+  Info,
+} from "lucide-react"
+import axios from "axios"
+import "../styles/Home.css"
+import { useNavigate } from "react-router-dom"
 
 const Home = () => {
-    const [currentTime, setCurrentTime] = useState(new Date());
-    const [cityInput, setCityInput] = useState('');
-    const [isAnimating, setIsAnimating] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [showDropdown, setShowDropdown] = useState(false);
-    
-    // User dropdown states
-    const [showUserDropdown, setShowUserDropdown] = useState(false);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [userInfo, setUserInfo] = useState({ name: '', email: '' });
+  const [currentTime, setCurrentTime] = useState(new Date())
+  const [cityInput, setCityInput] = useState("")
+  const [isAnimating, setIsAnimating] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [showDropdown, setShowDropdown] = useState(false)
 
-    // Khởi tạo weatherData mặc định
-    const [weatherData, setWeatherData] = useState({
-        city: '',
-        temperatureC: 0,
-        condition: '',
-        humidity: 0,
-        windKph: 0,
-        visibilityKm: 0,
-        uvIndex: 0
-    });
+  // User states
+  const [showUserDropdown, setShowUserDropdown] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [userInfo, setUserInfo] = useState({ name: "", email: "" })
 
-    // Danh sách các thành phố phổ biến ở Việt Nam (định dạng cho API)
-    const popularCities = [
-        'Ha Noi', 'Ho Chi Minh City', 'Da Nang', 'Hue', 
-        'Can Tho', 'Hai Phong', 'Nha Trang', 'Da Lat',
-        'Yen Bai', 'Quang Ninh', 'Lao Cai', 'Vung Tau'
-    ];
+  // Slide menu state
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-    useEffect(() => {
-        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-        return () => clearInterval(timer);
-    }, []);
+  const [weatherData, setWeatherData] = useState({
+    city: "",
+    temperatureC: 0,
+    condition: "",
+    humidity: 0,
+    windKph: 0,
+    visibilityKm: 0,
+    uvIndex: 0,
+  })
 
-    useEffect(() => {
-        // Fetch thời tiết mặc định khi load trang
-        fetchWeather('Ha Noi');
-        // Thử lấy vị trí hiện tại
-        getCurrentLocation();
-        
-        // Kiểm tra trạng thái đăng nhập từ localStorage
-        checkLoginStatus();
-    }, []);
+const popularCities = [
+  "Ha Noi",
+  "Ho Chi Minh",
+  "Hai Phong",
+  "Da Nang",
+  "Can Tho",
+  "An Giang",
+  "Ba Ria – Vung Tau",
+  "Bac Giang",
+  "Bac Kan",
+  "Bac Lieu",
+  "Bac Ninh",
+  "Ben Tre",
+  "Binh Dinh",
+  "Binh Duong",
+  "Binh Phuoc",
+  "Binh Thuan",
+  "Ca Mau",
+  "Cao Bang",
+  "Dak Lak",
+  "Dak Nong",
+  "Dien Bien",
+  "Dong Nai",
+  "Dong Thap",
+  "Gia Lai",
+  "Ha Giang",
+  "Ha Nam",
+  "Ha Tinh",
+  "Hai Duong",
+  "Hau Giang",
+  "Hoa Binh",
+  "Hung Yen",
+  "Khanh Hoa",
+  "Kien Giang",
+  "Kon Tum",
+  "Lai Chau",
+  "Lam Dong",
+  "Lang Son",
+  "Lao Cai",
+  "Long An",
+  "Nam Dinh",
+  "Nghe An",
+  "Ninh Binh",
+  "Ninh Thuan",
+  "Phu Tho",
+  "Quang Binh",
+  "Quang Nam",
+  "Quang Ngai",
+  "Quang Ninh",
+  "Quang Tri",
+  "Soc Trang",
+  "Son La",
+  "Tay Ninh",
+  "Thai Binh",
+  "Thai Nguyen",
+  "Thanh Hoa",
+  "Thua Thien Hue",
+  "Tien Giang",
+  "Tra Vinh",
+  "Tuyen Quang",
+  "Vinh Long",
+  "Vinh Phuc",
+  "Yen Bai",
+]
 
-    // Close dropdowns when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (!event.target.closest('.search-container')) {
-                setShowDropdown(false);
-            }
-            if (!event.target.closest('.user-dropdown-container')) {
-                setShowUserDropdown(false);
-            }
-        };
 
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+  // Menu items for slide menu
+  const menuItems = [
+    { icon: HomeIcon, label: "Trang chủ", id: "home", active: true },
+    { icon: Search, label: "Tìm kiếm", id: "search" },
+    { icon: Star, label: "Yêu thích", id: "favorites" },
+    { icon: FileText, label: "Báo cáo", id: "reports" },
+    { icon: Bell, label: "Thông báo", id: "notifications" },
+    { icon: Settings, label: "Cài đặt", id: "settings" },
+    { icon: Info, label: "Thông tin", id: "about" },
+  ]
 
-    // Kiểm tra trạng thái đăng nhập
-    const checkLoginStatus = () => {
-        const savedUser = localStorage.getItem('userInfo');
-        if (savedUser) {
-            const user = JSON.parse(savedUser);
-            setIsLoggedIn(true);
-            setUserInfo(user);
-        }
-    };
+  const navigate = useNavigate()
 
-    // Hàm đăng nhập demo
-    const handleLogin = () => {
-        // Demo login - trong thực tế sẽ kết nối API
-        const demoUser = {
-            name: 'Nguyễn Văn A',
-            email: 'user@example.com',
-            avatar: null
-        };
-        
-        setIsLoggedIn(true);
-        setUserInfo(demoUser);
-        localStorage.setItem('userInfo', JSON.stringify(demoUser));
-        setShowUserDropdown(false);
-        
-        // Có thể thêm notification/toast ở đây
-        console.log('Đăng nhập thành công!');
-    };
+  // Update clock
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000)
+    return () => clearInterval(timer)
+  }, [])
 
-    // Hàm đăng xuất
-    const handleLogout = () => {
-        setIsLoggedIn(false);
-        setUserInfo({ name: '', email: '' });
-        localStorage.removeItem('userInfo');
-        setShowUserDropdown(false);
-        
-        console.log('Đăng xuất thành công!');
-    };
+  // Check login and fetch default weather
+  useEffect(() => {
+    checkLoginStatus()
+    fetchWeather("Ha Noi")
+    getCurrentLocation()
+  }, [])
 
-    // Hàm đăng ký demo
-    const handleRegister = () => {
-        // Demo register - trong thực tế sẽ mở modal hoặc chuyển trang
-        console.log('Chuyển đến trang đăng ký');
-        setShowUserDropdown(false);
-    };
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest(".search-container")) setShowDropdown(false)
+      if (!event.target.closest(".user-menu-container")) setShowUserDropdown(false)
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
-    // Hàm cài đặt tài khoản
-    const handleSettings = () => {
-        console.log('Mở trang cài đặt tài khoản');
-        setShowUserDropdown(false);
-    };
+  // ✅ Check login using token from localStorage
+  const checkLoginStatus = async () => {
+    const token = localStorage.getItem("token")
+    if (!token) {
+      setIsLoggedIn(false)
+      setUserInfo({ name: "", email: "" })
+      navigate("/")
+      return
+    }
+    try {
+      const res = await axios.get("http://localhost:8080/users/profile", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      setIsLoggedIn(true)
+      setUserInfo(res.data.data)
+    } catch (err) {
+      console.error("❌ Error checking login:", err)
+      setIsLoggedIn(false)
+      setUserInfo({ name: "", email: "" })
+      localStorage.removeItem("token")
+      navigate("/")
+    }
+  }
 
-    // Lấy vị trí hiện tại của user
-    const getCurrentLocation = () => {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const { latitude, longitude } = position.coords;
-                    console.log('Current position:', latitude, longitude);
-                },
-                (error) => {
-                    console.error('Error getting location:', error);
-                }
-            );
-        }
-    };
+  const handleLogin = () => navigate("/")
 
-    // Gọi API thời tiết thật từ Render server
-    const fetchWeather = async (city) => {
-        const defaultCity = 'Yen Bai';
-        const cityToFetch = city || defaultCity;
-        
-        setIsLoading(true);
-        setError('');
+  const handleLogout = () => {
+    localStorage.removeItem("token")
+    setIsLoggedIn(false)
+    setUserInfo({ name: "", email: "" })
+    setShowUserDropdown(false)
+    navigate("/Home")
+  }
 
-        try {
-            const apiUrl = `http://localhost:8080/weather/find?local=${encodeURIComponent(cityToFetch)}`;
-            console.log('🔥 Calling API:', apiUrl);
+  const handleRegister = () => navigate("/register")
 
-            const response = await axios.get(apiUrl, {
-                timeout: 15000,
-                headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
-            });
+  const handleSettings = () => {
+    console.log("Open settings")
+    setShowUserDropdown(false)
+  }
 
-            console.log('✅ API Response:', response.data);
+  const getCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => console.log("Current pos:", pos.coords.latitude, pos.coords.longitude),
+        (err) => console.error("Geolocation error:", err),
+      )
+    }
+  }
 
-            if (response.data) {
-                setWeatherData(response.data);
-                setIsAnimating(true);
-                setTimeout(() => setIsAnimating(false), 600);
-            }
-        } catch (error) {
-            console.error('❌ API Error:', error);
-            let errorMessage = 'Không thể lấy thông tin thời tiết. ';
+  const fetchWeather = async (city) => {
+    const cityToFetch = city || "Yen Bai"
+    setIsLoading(true)
+    setError("")
+    try {
+      const apiUrl = `http://localhost:8080/weather/find?local=${encodeURIComponent(cityToFetch)}`
+      const res = await axios.get(apiUrl, { timeout: 15000 })
+      if (res.data) {
+        setWeatherData(res.data)
+        setIsAnimating(true)
+        setTimeout(() => setIsAnimating(false), 600)
+      }
+    } catch (err) {
+      console.error("❌ API error:", err)
+      let errorMessage = "Không thể lấy thông tin thời tiết."
+      if (err.response) {
+        if (err.response.status === 404) errorMessage += " Không tìm thấy thành phố."
+        else if (err.response.status === 500) errorMessage += " Lỗi server."
+      } else if (err.request) {
+        errorMessage += " Server đang khởi động, chờ vài giây."
+      } else {
+        errorMessage += err.message
+      }
+      setError(errorMessage)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
-            if (error.response) {
-                if (error.response.status === 404) errorMessage += 'Không tìm thấy thông tin thành phố này.';
-                else if (error.response.status === 500) errorMessage += 'Lỗi server, vui lòng thử lại sau.';
-                else errorMessage += `Lỗi ${error.response.status}: ${error.response.statusText}`;
-            } else if (error.request) {
-                errorMessage += 'Server Render đang khởi động, vui lòng chờ 30-60 giây và thử lại.';
-            } else {
-                errorMessage += error.message;
-            }
+  const handleSearch = () => {
+    if (cityInput.trim()) {
+      fetchWeather(cityInput.trim())
+      setCityInput("")
+      setShowDropdown(false)
+    }
+  }
 
-            setError(errorMessage);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+  const handleKeyPress = (e) => e.key === "Enter" && handleSearch()
+  const handleCitySelect = (city) => {
+    setCityInput(city)
+    fetchWeather(city)
+    setShowDropdown(false)
+  }
+  const handleInputFocus = () => setShowDropdown(true)
+  const handleInputChange = (e) => {
+    setCityInput(e.target.value)
+    setShowDropdown(true)
+  }
+  const filteredCities = popularCities.filter((city) => city.toLowerCase().includes(cityInput.toLowerCase()))
 
-    const handleSearch = () => {
-        if (cityInput.trim()) {
-            fetchWeather(cityInput.trim());
-            setCityInput('');
-            setShowDropdown(false);
-        }
-    };
+  const getWeatherIcon = (condition) => {
+    const cond = condition?.toLowerCase() || ""
+    if (cond.includes("nắng") || cond.includes("sunny")) return <Sun className="weather-icon sun-icon" />
+    if (cond.includes("mưa") || cond.includes("rain")) return <CloudRain className="weather-icon rain-icon" />
+    if (cond.includes("mây") || cond.includes("cloud")) return <Cloud className="weather-icon cloud-icon" />
+    return <Sun className="weather-icon sun-icon" />
+  }
 
-    const handleKeyPress = (e) => {
-        if (e.key === 'Enter') handleSearch();
-    };
+  const getTemperatureColor = (temp) => {
+    if (temp > 35) return "temp-very-hot"
+    if (temp > 28) return "temp-hot"
+    if (temp > 20) return "temp-warm"
+    if (temp > 15) return "temp-cool"
+    return "temp-cold"
+  }
 
-    const handleCitySelect = (city) => {
-        setCityInput(city);
-        fetchWeather(city);
-        setShowDropdown(false);
-    };
+  // Handle menu item click
+  const handleMenuItemClick = (itemId) => {
+    console.log(`Clicked menu item: ${itemId}`)
+    setIsMenuOpen(false)
+    // Add navigation logic here based on itemId
+    switch (itemId) {
+      case "home":
+        navigate("/Home")
+        break
+      case "settings":
+        handleSettings()
+        break
+      // Add more cases as needed
+      default:
+        console.log(`Navigate to ${itemId}`)
+    }
+  }
 
-    const handleInputFocus = () => {
-        setShowDropdown(true);
-    };
+  return (
+    <div className="weather-app">
+      {/* BACKGROUND ELEMENTS */}
+      <div className="background-elements">
+        <div className="floating-element element-1"></div>
+        <div className="floating-element element-2"></div>
+        <div className="floating-element element-3"></div>
+        <div className="floating-element element-4"></div>
+      </div>
 
-    const handleInputChange = (e) => {
-        setCityInput(e.target.value);
-        setShowDropdown(true);
-    };
-
-    // Filter cities based on input
-    const filteredCities = popularCities.filter(city =>
-        city.toLowerCase().includes(cityInput.toLowerCase())
-    );
-
-    // Hàm lấy icon thời tiết dựa trên condition
-    const getWeatherIcon = (condition) => {
-        const conditionLower = condition.toLowerCase();
-        
-        if (conditionLower.includes('nắng') || conditionLower.includes('sunny')) {
-            return <Sun className="weather-icon sun-icon" />;
-        } else if (conditionLower.includes('mưa') || conditionLower.includes('rain')) {
-            return <CloudRain className="weather-icon rain-icon" />;
-        } else if (conditionLower.includes('mây') || conditionLower.includes('cloud')) {
-            return <Cloud className="weather-icon cloud-icon" />;
-        }
-        return <Sun className="weather-icon sun-icon" />;
-    };
-
-    // Hàm lấy màu sắc dựa trên nhiệt độ
-    const getTemperatureColor = (temp) => {
-        if (temp > 35) return 'temp-very-hot';
-        if (temp > 28) return 'temp-hot';
-        if (temp > 20) return 'temp-warm';
-        if (temp > 15) return 'temp-cool';
-        return 'temp-cold';
-    };
-
-    return (
-        <div className="weather-app">
-            <div className="background-elements">
-                <div className="floating-element element-1"></div>
-                <div className="floating-element element-2"></div>
-                <div className="floating-element element-3"></div>
-                <div className="floating-element element-4"></div>
+      {/* SLIDE MENU OVERLAY */}
+      {isMenuOpen && (
+        <div className="menu-overlay" onClick={() => setIsMenuOpen(false)}>
+          <div className="slide-menu" onClick={(e) => e.stopPropagation()}>
+            {/* Menu Header */}
+            <div className="menu-header">
+              <div className="menu-logo">
+                <div className="siw-logo-small">SIW</div>
+                <span className="menu-title">Dashboard</span>
+              </div>
+              <button className="menu-close-btn" onClick={() => setIsMenuOpen(false)}>
+                <X size={24} />
+              </button>
             </div>
 
-            <div className="main-container">
-                {/* Top Navigation Bar - Weather App Style */}
-                <nav className="top-nav-bar">
-                    <div className="nav-left">
-                        <div className="weather-logo">
-                            <Sun className="logo-icon" />
-                            <Cloud className="logo-cloud" />
-                        </div>
-                    </div>
-                    
-                    <div className="nav-center">
-                        <div className="search-container">
-                            <input
-                                type="text"
-                                value={cityInput}
-                                onChange={handleInputChange}
-                                onKeyPress={handleKeyPress}
-                                onFocus={handleInputFocus}
-                                placeholder="Tìm kiếm thành phố..."
-                                className="nav-search-input"
-                                disabled={isLoading}
-                            />
-                            
-                            {showDropdown && (
-                                <div className="city-dropdown">
-                                    <div className="dropdown-header">Chọn thành phố:</div>
-                                    {filteredCities.length > 0 ? (
-                                        filteredCities.map((city, index) => (
-                                            <div
-                                                key={index}
-                                                onClick={() => handleCitySelect(city)}
-                                                className={`dropdown-item ${weatherData.city === city ? 'active' : ''}`}
-                                            >
-                                                <MapPin className="dropdown-icon" />
-                                                {city}
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div className="dropdown-item no-results">
-                                            Không tìm thấy thành phố phù hợp
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    
-                    <div className="nav-right">
-                        <button 
-                            onClick={handleSearch}
-                            className="nav-search-button"
-                            disabled={isLoading || !cityInput.trim()}
-                        >
-                            {isLoading ? <Loader className="spinning" /> : <Search />}
-                        </button>
-
-                        {/* User Dropdown Menu */}
-                        <div className="user-dropdown-container">
-                            <button 
-                                className="user-menu-button"
-                                onClick={() => setShowUserDropdown(!showUserDropdown)}
-                            >
-                                <User className="user-icon" />
-                                {isLoggedIn && <span className="user-name">{userInfo.name.split(' ')[0]}</span>}
-                                <ChevronDown className={`chevron-icon ${showUserDropdown ? 'rotate' : ''}`} />
-                            </button>
-
-                            {showUserDropdown && (
-                                <div className="user-dropdown">
-                                    {isLoggedIn ? (
-                                        // Menu khi đã đăng nhập
-                                        <>
-                                            <div className="user-info">
-                                                <div className="user-avatar">
-                                                    <User className="avatar-icon" />
-                                                </div>
-                                                <div className="user-details">
-                                                    <div className="user-display-name">{userInfo.name}</div>
-                                                    <div className="user-email">{userInfo.email}</div>
-                                                </div>
-                                            </div>
-                                            <div className="dropdown-divider"></div>
-                                            <button 
-                                                className="dropdown-menu-item"
-                                                onClick={handleSettings}
-                                            >
-                                                <Settings className="menu-icon" />
-                                                Cài đặt tài khoản
-                                            </button>
-                                            <button 
-                                                className="dropdown-menu-item logout-item"
-                                                onClick={handleLogout}
-                                            >
-                                                <LogOut className="menu-icon" />
-                                                Đăng xuất
-                                            </button>
-                                        </>
-                                    ) : (
-                                        // Menu khi chưa đăng nhập
-                                        <>
-                                            <button 
-                                                className="dropdown-menu-item login-item"
-                                                onClick={handleLogin}
-                                            >
-                                                <LogIn className="menu-icon" />
-                                                Đăng nhập
-                                            </button>
-                                            <button 
-                                                className="dropdown-menu-item register-item"
-                                                onClick={handleRegister}
-                                            >
-                                                <UserPlus className="menu-icon" />
-                                                Đăng ký
-                                            </button>
-                                        </>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </nav>
-
-                <header className="app-header">
-                    <div className="clock-section">
-                        <div className="date">
-                            {currentTime.toLocaleDateString('vi-VN', {
-                                weekday: 'long',
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                            })}
-                        </div>
-                        <div className="time">
-                            {currentTime.toLocaleTimeString('vi-VN', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                second: '2-digit'
-                            })}
-                        </div>
-                    </div>
-                    <h1 className="app-title">Weather App</h1>
-                    <p className="app-subtitle">Khám phá thời tiết tại nơi bạn ở một cách dễ dàng!</p>
-                </header>
-                            
-                <main className="main-content">
-                    <section className={`weather-card ${isAnimating ? 'animating' : ''}`}>
-                        <div className="weather-header">
-                            <h2 className="city-name">
-                                <MapPin className="location-icon" />
-                                {weatherData.city || 'Chưa chọn thành phố'}
-                            </h2>
-                            {isLoading && <Loader className="loading-spinner spinning" />}
-                        </div>
-
-                        {error && (
-                            <div className="error-message">
-                                <p>{error}</p>
-                            </div>
-                        )}
-
-                        <div className="current-weather">
-                            {getWeatherIcon(weatherData.condition)}
-                            <p className={`temperature ${getTemperatureColor(weatherData.temperatureC)}`}>
-                                {weatherData.temperatureC}°C
-                            </p>
-                            <p className="condition">{weatherData.condition}</p>
-                        </div>
-
-                        <div className="weather-details">
-                            <div className="detail-card">
-                                <div className="detail-icon-container orange-color">
-                                    <Thermometer className="detail-icon" />
-                                </div>
-                                <div className="detail-content">
-                                    <p className="detail-label">Nhiệt độ</p>
-                                    <p className="detail-value">{weatherData.temperatureC}°C</p>
-                                </div>
-                            </div>
-
-                            <div className="detail-card">
-                                <div className="detail-icon-container blue-color">
-                                    <Droplets className="detail-icon" />
-                                </div>
-                                <div className="detail-content">
-                                    <p className="detail-label">Độ ẩm</p>
-                                    <p className="detail-value">{weatherData.humidity}%</p>
-                                </div>
-                            </div>
-
-                            <div className="detail-card">
-                                <div className="detail-icon-container green-color">
-                                    <Wind className="detail-icon" />
-                                </div>
-                                <div className="detail-content">
-                                    <p className="detail-label">Gió</p>
-                                    <p className="detail-value">{weatherData.windKph} km/h</p>
-                                </div>
-                            </div>
-
-                            <div className="detail-card">
-                                <div className="detail-icon-container gray-color">
-                                    <Eye className="detail-icon" />
-                                </div>
-                                <div className="detail-content">
-                                    <p className="detail-label">Tầm nhìn</p>
-                                    <p className="detail-value">{weatherData.visibilityKm} km</p>
-                                </div>
-                            </div>
-
-                            <div className="detail-card">
-                                <div className="detail-icon-container purple-color">
-                                    <Gauge className="detail-icon" />
-                                </div>
-                                <div className="detail-content">
-                                    <p className="detail-label">Chỉ số UV</p>
-                                    <p className="detail-value">{weatherData.uvIndex}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* AI Prediction Section */}
-                    <section className="ai-forecast-section">
-                        <div className="ai-forecast">
-                            <h2 className="section-title">
-                                <Cloud className="section-icon" />
-                                Dự đoán từ AI
-                            </h2>
-                            <div className="ai-prediction">
-                                {weatherData.temperatureC > 30 && (
-                                    <p>🌞 Hôm nay trời nắng nóng, nhớ mang theo nước và kem chống nắng!</p>
-                                )}
-                                {weatherData.condition && weatherData.condition.toLowerCase().includes('mưa') && (
-                                    <p>🌧️ Trời có mưa, đừng quên mang theo ô khi ra ngoài!</p>
-                                )}
-                                {weatherData.humidity > 80 && (
-                                    <p>💧 Độ ẩm cao, có thể cảm thấy oi bức. Nên ở nơi thoáng mát!</p>
-                                )}
-                                {weatherData.windKph > 20 && (
-                                    <p>💨 Gió mạnh, hãy cẩn thận khi di chuyển!</p>
-                                )}
-                                {!weatherData.city && (
-                                    <p>🔍 Hãy chọn một thành phố để xem thông tin thời tiết!</p>
-                                )}
-                            </div>
-                        </div>
-                    </section>
-                </main>
-
-                <footer className="app-footer">
-                    <p>Weather App © 2025 - Dữ liệu thời tiết cập nhật realtime</p>
-                </footer>
+            {/* Menu Items */}
+            <div className="menu-items">
+              {menuItems.map((item, index) => (
+                <button
+                  key={item.id}
+                  className={`menu-item ${item.active ? "active" : ""}`}
+                  onClick={() => handleMenuItemClick(item.id)}
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <div className="menu-item-icon">
+                    <item.icon size={24} />
+                  </div>
+                  <span className="menu-item-label">{item.label}</span>
+                </button>
+              ))}
             </div>
+
+            {/* Menu Footer */}
+            <div className="menu-footer">
+              <div className="user-profile">
+                <div className="user-avatar-menu">
+                  <User size={32} />
+                </div>
+                <div className="user-info-menu">
+                  <div className="user-name-menu">{userInfo.name || "Guest User"}</div>
+                  <div className="user-email-menu">{userInfo.email || "guest@siw.com"}</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-    );
-};
+      )}
 
-export default Home;
+      <div className="main-container">
+        {/* TOP NAVIGATION */}
+        <nav className="top-nav-bar">
+          <div className="nav-left">
+            <button className="menu-toggle-btn" onClick={() => setIsMenuOpen(true)}>
+              <Menu size={24} />
+            </button>
+            <div className="weather-logo">
+              <div className="siw-logo">SIW</div>
+              <span className="weather-title">Weather</span>
+            </div>
+          </div>
+
+          <div className="nav-center">
+  <div className="search-container">
+    <input
+      type="text"
+      className="nav-search-input"
+      placeholder="Nhập tên thành phố..."
+      value={cityInput}
+      onChange={handleInputChange}
+      onFocus={handleInputFocus}
+      onKeyDown={handleKeyPress}
+    />
+    <button className="nav-search-button" onClick={handleSearch}>
+      <Search size={20} />
+    </button>
+
+    {showDropdown && (
+      <div className="city-dropdown">
+        <div className="dropdown-header">Thành phố phổ biến</div>
+        {filteredCities.length > 0 ? (
+          filteredCities.map((city) => (
+            <div
+              key={city}
+              className="dropdown-item"
+              onClick={() => handleCitySelect(city)}
+            >
+              {city}
+            </div>
+          ))
+        ) : (
+          <div className="dropdown-item no-results">Không tìm thấy</div>
+        )}
+      </div>
+    )}
+  </div>
+</div>
+
+
+          <div className="nav-right">
+            {/* User Dropdown Menu */}
+            <div className="user-menu-container">
+              <button className="user-menu-button" onClick={() => setShowUserDropdown(!showUserDropdown)}>
+                <User className="user-icon" />
+                {isLoggedIn && <span className="user-name">{userInfo.name.split(" ")[0]}</span>}
+              </button>
+
+              {showUserDropdown && (
+                <div className="user-dropdown">
+                  {isLoggedIn ? (
+                    <>
+                      <div className="user-info">
+                        <div className="user-avatar">
+                          <User className="avatar-icon" />
+                        </div>
+                        <div className="user-details">
+                          <div className="user-display-name">{userInfo.name}</div>
+                          <div className="user-email">{userInfo.email}</div>
+                        </div>
+                      </div>
+                      <div className="dropdown-divider"></div>
+                      <button className="dropdown-menu-item" onClick={handleSettings}>
+                        <Settings className="menu-icon" /> Cài đặt
+                      </button>
+                      <button className="dropdown-menu-item logout-item" onClick={handleLogout}>
+                        <LogOut className="menu-icon" /> Đăng xuất
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button className="dropdown-menu-item" onClick={handleLogin}>
+                        <LogIn className="menu-icon" /> Đăng nhập
+                      </button>
+                      <button className="dropdown-menu-item" onClick={handleRegister}>
+                        <UserPlus className="menu-icon" /> Đăng ký
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </nav>
+
+        {/* MAIN WEATHER CONTENT */}
+        <main className="weather-main">
+        <div className={`clock-section ${showDropdown ? "clock-hidden" : ""}`}>
+
+
+            <div className="date">
+              {currentTime.toLocaleDateString("vi-VN", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </div>
+            <div className="time">
+              {currentTime.toLocaleTimeString("vi-VN", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+              })}
+            </div>
+          </div>
+
+          {error && <div className="error-message">{error}</div>}
+
+          <div className={`weather-card ${isAnimating ? "animate" : ""}`}>
+            <div className="weather-city">
+              <MapPin className="location-icon" />
+              {weatherData.city || "Chọn thành phố"}
+            </div>
+
+            <div className="weather-condition">
+              {getWeatherIcon(weatherData.condition)}
+              <div className={`temperature ${getTemperatureColor(weatherData.temperatureC)}`}>
+                {weatherData.temperatureC || "--"}°C
+              </div>
+              <div className="condition-text">{weatherData.condition || "Đang tải..."}</div>
+            </div>
+
+            <div className="weather-details">
+              <div className="weather-detail">
+                <Droplets className="detail-icon" />
+                <span>{weatherData.humidity || "--"}%</span>
+                <small>Độ ẩm</small>
+              </div>
+              <div className="weather-detail">
+                <Wind className="detail-icon" />
+                <span>{weatherData.windKph || "--"} km/h</span>
+                <small>Gió</small>
+              </div>
+              <div className="weather-detail">
+                <Eye className="detail-icon" />
+                <span>{weatherData.visibilityKm || "--"} km</span>
+                <small>Tầm nhìn</small>
+              </div>
+              <div className="weather-detail">
+                <Gauge className="detail-icon" />
+                <span>UV {weatherData.uvIndex || "--"}</span>
+                <small>Chỉ số UV</small>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  )
+}
+
+export default Home
