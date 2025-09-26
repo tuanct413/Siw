@@ -1,9 +1,9 @@
 package com.example.demo.config;
 
-import com.example.demo.DTO.CustomUserDetails;
-import com.example.demo.Model.User;
-import com.example.demo.repository.UserRepository;
-import com.example.demo.service.JwtService;
+import com.example.demo.User.DTO.CustomUserDetails;
+import com.example.demo.User.model.User;
+import com.example.demo.User.repository.UserRepository;
+import com.example.demo.common.security.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,7 +11,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.server.ResponseStatusException;
