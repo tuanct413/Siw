@@ -25,14 +25,11 @@ import java.util.Map;
 @RequestMapping("/users")
 public class UserController {
     private final UserServiceinterface userService;
-    private final JwtService jwtService;
     private final WeatherServiceInterface weatherServiceImp;
 
-    public UserController(UserServiceinterface userService, JwtService jwtService, WeatherServiceInterface weatherServiceImp) {
+    public UserController(UserServiceinterface userService, WeatherServiceInterface weatherServiceImp) {
         this.userService = userService;
-        this.jwtService = jwtService;
         this.weatherServiceImp = weatherServiceImp;
-
     }
 
     @GetMapping("/find")
@@ -40,21 +37,7 @@ public class UserController {
         return userService.findByEmail(email);
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(
-            @Valid @RequestBody LoginRequestDTO request,
-            BindingResult result,
-            HttpServletResponse response) {
 
-        if (result.hasErrors()) {
-            Map<String, Object> res = new HashMap<>();
-            res.put("message", result.getAllErrors().get(0).getDefaultMessage());
-            res.put("data", null);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
-        }
-
-        return userService.login(request.getEmail(), request.getPassword(), response);
-    }
 
     @GetMapping("/getall")
     public List<User> getAllUsers(){
@@ -76,11 +59,6 @@ public class UserController {
         return userService.updateUser(dto, userId);
     }
 
-    @PostMapping("/forgot-password")
-    public ResponseEntity<Map<String, Object>> forgotPassword(@RequestBody ForgotPasswordDTO forgotPasswordDTO) {
-        // Gọi thẳng service
-        return userService.forgotPassword(forgotPasswordDTO);
-    }
     @GetMapping("/profile")
     public ResponseEntity<Map<String,Object>> getProfile(Authentication authentication) {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();

@@ -1,515 +1,577 @@
-"use client"
-
-import { useState, useEffect } from "react"
-import {
-  Cloud,
-  Sun,
-  CloudRain,
-  Wind,
-  Droplets,
-  Eye,
-  Gauge,
-  MapPin,
-  Search,
-  User,
-  LogIn,
-  UserPlus,
-  Settings,
-  LogOut,
-  Menu,
-  X,
-  HomeIcon,
-  BarChart3,
-  FileText,
-  Bell,
-  Wallet,
-  Star,
-  Info,
-} from "lucide-react"
-import axios from "axios"
-import "../styles/Home.css"
-import { useNavigate } from "react-router-dom"
+import React, { useState, useEffect } from "react";
+import { fetchWeather, fetchWeather7days, fetchFavorite, getProfile,fetchWeather24hours } from "../api/weather/weatherService";
+import { compareCity } from "../api/weather/weatherFavorite";
+import "../styles/Home.css";
+import conditionMap from "../utils/conditionMap";
 
 const Home = () => {
-  const [currentTime, setCurrentTime] = useState(new Date())
-  const [cityInput, setCityInput] = useState("")
-  const [isAnimating, setIsAnimating] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
-  const [showDropdown, setShowDropdown] = useState(false)
+  const [weatherData, setWeatherData] = useState(null);
+  const [weather7daysData, setWeather7daysData] = useState(null);
+  const [favoriteData, setFavoriteData] = useState(null);
+  const [city, setCity] = useState("");
+  const [profileData, setProfileData] = useState(null);
+  const [city1, setCity1] = useState("");
+  const [city2, setCity2] = useState("");
+  const [compareData, setCompareData] = useState(null);
+  const [activeTab, setActiveTab] = useState("weather");
+  const [hourlyData, setHourlyData] = useState([]);
 
-  // User states
-  const [showUserDropdown, setShowUserDropdown] = useState(false)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [userInfo, setUserInfo] = useState({ name: "", email: "" })
+  const cityOptions = ["Ha Noi", "Ho Chi Minh", "Da Nang", "Hai Phong", "Can Tho"];
 
-  // Slide menu state
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-
-  const [weatherData, setWeatherData] = useState({
-    city: "",
-    temperatureC: 0,
-    condition: "",
-    humidity: 0,
-    windKph: 0,
-    visibilityKm: 0,
-    uvIndex: 0,
-  })
-
-const popularCities = [
-  "Ha Noi",
-  "Ho Chi Minh",
-  "Hai Phong",
-  "Da Nang",
-  "Can Tho",
-  "An Giang",
-  "Ba Ria – Vung Tau",
-  "Bac Giang",
-  "Bac Kan",
-  "Bac Lieu",
-  "Bac Ninh",
-  "Ben Tre",
-  "Binh Dinh",
-  "Binh Duong",
-  "Binh Phuoc",
-  "Binh Thuan",
-  "Ca Mau",
-  "Cao Bang",
-  "Dak Lak",
-  "Dak Nong",
-  "Dien Bien",
-  "Dong Nai",
-  "Dong Thap",
-  "Gia Lai",
-  "Ha Giang",
-  "Ha Nam",
-  "Ha Tinh",
-  "Hai Duong",
-  "Hau Giang",
-  "Hoa Binh",
-  "Hung Yen",
-  "Khanh Hoa",
-  "Kien Giang",
-  "Kon Tum",
-  "Lai Chau",
-  "Lam Dong",
-  "Lang Son",
-  "Lao Cai",
-  "Long An",
-  "Nam Dinh",
-  "Nghe An",
-  "Ninh Binh",
-  "Ninh Thuan",
-  "Phu Tho",
-  "Quang Binh",
-  "Quang Nam",
-  "Quang Ngai",
-  "Quang Ninh",
-  "Quang Tri",
-  "Soc Trang",
-  "Son La",
-  "Tay Ninh",
-  "Thai Binh",
-  "Thai Nguyen",
-  "Thanh Hoa",
-  "Thua Thien Hue",
-  "Tien Giang",
-  "Tra Vinh",
-  "Tuyen Quang",
-  "Vinh Long",
-  "Vinh Phuc",
-  "Yen Bai",
-]
+useEffect(() => {
+  loadWeather("Ha Noi");
+  loadfetchFavorite("Ha Noi", "Rain");
+  fetchUserProfile();
+}, []);
 
 
-  // Menu items for slide menu
-  const menuItems = [
-    { icon: HomeIcon, label: "Trang chủ", id: "home", active: true },
-    { icon: Search, label: "Tìm kiếm", id: "search" },
-    { icon: Star, label: "Yêu thích", id: "favorites" },
-    { icon: FileText, label: "Báo cáo", id: "reports" },
-    { icon: Bell, label: "Thông báo", id: "notifications" },
-    { icon: Settings, label: "Cài đặt", id: "settings" },
-    { icon: Info, label: "Thông tin", id: "about" },
-  ]
-
-  const navigate = useNavigate()
-
-  // Update clock
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000)
-    return () => clearInterval(timer)
-  }, [])
-
-  // Check login and fetch default weather
-  useEffect(() => {
-    checkLoginStatus()
-    fetchWeather("Ha Noi")
-    getCurrentLocation()
-  }, [])
-
-  // Close dropdowns when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (!event.target.closest(".search-container")) setShowDropdown(false)
-      if (!event.target.closest(".user-menu-container")) setShowUserDropdown(false)
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
-
-  // ✅ Check login using token from localStorage
-  const checkLoginStatus = async () => {
-    const token = localStorage.getItem("token")
-    if (!token) {
-      setIsLoggedIn(false)
-      setUserInfo({ name: "", email: "" })
-      navigate("/")
-      return
-    }
+  const fetchUserProfile = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
     try {
-      const res = await axios.get("http://localhost:8080/users/profile", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      setIsLoggedIn(true)
-      setUserInfo(res.data.data)
-    } catch (err) {
-      console.error("❌ Error checking login:", err)
-      setIsLoggedIn(false)
-      setUserInfo({ name: "", email: "" })
-      localStorage.removeItem("token")
-      navigate("/")
+      const res = await getProfile();
+      const { name, email, role } = res.data;
+      setProfileData({ name, email, role });
+    } catch (error) {
+      console.error("Profile fetch error:", error.message);
     }
-  }
+  };
 
-  const handleLogin = () => navigate("/")
+
+const loadWeather = async (cityName) => {
+  try {
+    const current = await fetchWeather(cityName);
+    const forecast = await fetchWeather7days(cityName);
+    const forecast1 = await fetchWeather24hours(cityName);
+
+    setWeatherData(current);
+    setWeather7daysData(forecast);
+
+    // format hourly như useEffect
+    if (Array.isArray(forecast1)) {
+      const formattedHourly = forecast1.slice(0, 12).map(hour => ({
+        time: new Date(hour.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        icon: <img src={hour.conditionIcon} alt={hour.conditionText} />,
+        temp: `${hour.maxtemp_c}° `
+      }));
+      setHourlyData(formattedHourly);
+    }
+  } catch (error) {
+    console.error("API error:", error);
+  }
+};
+
+const loadfetchFavorite = async (cityName, weather) => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    setFavoriteData(null);
+    return null; // trả null nếu không có token
+  }
+  try {
+    const favorite = await fetchFavorite(cityName, weather, token);
+    setFavoriteData(favorite.data); // lưu data để render
+    console.log(favorite.data.weatherMessage); 
+    return favorite; // trả về favorite cho async/await
+  } catch (error) {
+    console.error("API error:", error);
+    return null;
+  }
+};
+
+
+
+  const fetchCompareData = async (cityName1, cityName2) => {
+    try {
+      const compare = await compareCity(cityName1, cityName2);
+      setCompareData(compare);
+    } catch (error) {
+      console.error("API error:", error);
+    }
+  };
 
   const handleLogout = () => {
-    localStorage.removeItem("token")
-    setIsLoggedIn(false)
-    setUserInfo({ name: "", email: "" })
-    setShowUserDropdown(false)
-    navigate("/Home")
-  }
+    localStorage.removeItem("token");
+    setProfileData(null);
+    window.location.reload();
+  };
 
-  const handleRegister = () => navigate("/register")
 
-  const handleSettings = () => {
-    console.log("Open settings")
-    setShowUserDropdown(false)
-  }
-
-  const getCurrentLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => console.log("Current pos:", pos.coords.latitude, pos.coords.longitude),
-        (err) => console.error("Geolocation error:", err),
-      )
-    }
-  }
-
-  const fetchWeather = async (city) => {
-    const cityToFetch = city || "Yen Bai"
-    setIsLoading(true)
-    setError("")
-    try {
-      const apiUrl = `http://localhost:8080/weather/find?local=${encodeURIComponent(cityToFetch)}`
-      const res = await axios.get(apiUrl, { timeout: 15000 })
-      if (res.data) {
-        setWeatherData(res.data)
-        setIsAnimating(true)
-        setTimeout(() => setIsAnimating(false), 600)
-      }
-    } catch (err) {
-      console.error("❌ API error:", err)
-      let errorMessage = "Không thể lấy thông tin thời tiết."
-      if (err.response) {
-        if (err.response.status === 404) errorMessage += " Không tìm thấy thành phố."
-        else if (err.response.status === 500) errorMessage += " Lỗi server."
-      } else if (err.request) {
-        errorMessage += " Server đang khởi động, chờ vài giây."
-      } else {
-        errorMessage += err.message
-      }
-      setError(errorMessage)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleSearch = () => {
-    if (cityInput.trim()) {
-      fetchWeather(cityInput.trim())
-      setCityInput("")
-      setShowDropdown(false)
-    }
-  }
-
-  const handleKeyPress = (e) => e.key === "Enter" && handleSearch()
-  const handleCitySelect = (city) => {
-    setCityInput(city)
-    fetchWeather(city)
-    setShowDropdown(false)
-  }
-  const handleInputFocus = () => setShowDropdown(true)
-  const handleInputChange = (e) => {
-    setCityInput(e.target.value)
-    setShowDropdown(true)
-  }
-  const filteredCities = popularCities.filter((city) => city.toLowerCase().includes(cityInput.toLowerCase()))
-
-  const getWeatherIcon = (condition) => {
-    const cond = condition?.toLowerCase() || ""
-    if (cond.includes("nắng") || cond.includes("sunny")) return <Sun className="weather-icon sun-icon" />
-    if (cond.includes("mưa") || cond.includes("rain")) return <CloudRain className="weather-icon rain-icon" />
-    if (cond.includes("mây") || cond.includes("cloud")) return <Cloud className="weather-icon cloud-icon" />
-    return <Sun className="weather-icon sun-icon" />
-  }
-
-  const getTemperatureColor = (temp) => {
-    if (temp > 35) return "temp-very-hot"
-    if (temp > 28) return "temp-hot"
-    if (temp > 20) return "temp-warm"
-    if (temp > 15) return "temp-cool"
-    return "temp-cold"
-  }
-
-  // Handle menu item click
-  const handleMenuItemClick = (itemId) => {
-    console.log(`Clicked menu item: ${itemId}`)
-    setIsMenuOpen(false)
-    // Add navigation logic here based on itemId
-    switch (itemId) {
-      case "home":
-        navigate("/Home")
-        break
-      case "settings":
-        handleSettings()
-        break
-      // Add more cases as needed
-      default:
-        console.log(`Navigate to ${itemId}`)
-    }
-  }
 
   return (
     <div className="weather-app">
-      {/* BACKGROUND ELEMENTS */}
-      <div className="background-elements">
-        <div className="floating-element element-1"></div>
-        <div className="floating-element element-2"></div>
-        <div className="floating-element element-3"></div>
-        <div className="floating-element element-4"></div>
-      </div>
-
-      {/* SLIDE MENU OVERLAY */}
-      {isMenuOpen && (
-        <div className="menu-overlay" onClick={() => setIsMenuOpen(false)}>
-          <div className="slide-menu" onClick={(e) => e.stopPropagation()}>
-            {/* Menu Header */}
-            <div className="menu-header">
-              <div className="menu-logo">
-                <div className="siw-logo-small">SIW</div>
-                <span className="menu-title">Dashboard</span>
+      <div className="app-container">
+        {/* Sidebar Navigation */}
+        <div className="sidebar">
+          {/* Profile Section at Top */}
+          {profileData && (
+            <div className="sidebar-profile">
+              <div className="profile-avatar">
+                <i className="bi bi-person-circle" style={{ fontSize: '32px', color: '#94a3b8' }}></i>
               </div>
-              <button className="menu-close-btn" onClick={() => setIsMenuOpen(false)}>
-                <X size={24} />
-              </button>
-            </div>
-
-            {/* Menu Items */}
-            <div className="menu-items">
-              {menuItems.map((item, index) => (
-                <button
-                  key={item.id}
-                  className={`menu-item ${item.active ? "active" : ""}`}
-                  onClick={() => handleMenuItemClick(item.id)}
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <div className="menu-item-icon">
-                    <item.icon size={24} />
-                  </div>
-                  <span className="menu-item-label">{item.label}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* Menu Footer */}
-            <div className="menu-footer">
-              <div className="user-profile">
-                <div className="user-avatar-menu">
-                  <User size={32} />
-                </div>
-                <div className="user-info-menu">
-                  <div className="user-name-menu">{userInfo.name || "Guest User"}</div>
-                  <div className="user-email-menu">{userInfo.email || "guest@siw.com"}</div>
-                </div>
+              <div className="profile-info">
+                <div className="profile-name">{profileData.name}</div>
+                <div className="profile-email">{profileData.email}</div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          )}
 
-      <div className="main-container">
-        {/* TOP NAVIGATION */}
-        <nav className="top-nav-bar">
-          <div className="nav-left">
-            <button className="menu-toggle-btn" onClick={() => setIsMenuOpen(true)}>
-              <Menu size={24} />
-            </button>
-            <div className="weather-logo">
-              <div className="siw-logo">SIW</div>
-              <span className="weather-title">Weather</span>
-            </div>
-          </div>
-
-          <div className="nav-center">
-  <div className="search-container">
-    <input
-      type="text"
-      className="nav-search-input"
-      placeholder="Nhập tên thành phố..."
-      value={cityInput}
-      onChange={handleInputChange}
-      onFocus={handleInputFocus}
-      onKeyDown={handleKeyPress}
-    />
-    <button className="nav-search-button" onClick={handleSearch}>
-      <Search size={20} />
-    </button>
-
-    {showDropdown && (
-      <div className="city-dropdown">
-        <div className="dropdown-header">Thành phố phổ biến</div>
-        {filteredCities.length > 0 ? (
-          filteredCities.map((city) => (
-            <div
-              key={city}
-              className="dropdown-item"
-              onClick={() => handleCitySelect(city)}
+          {/* Navigation Items */}
+          <div className="sidebar-nav">
+            <div 
+              className={`sidebar-item ${activeTab === "home" ? "active" : ""}`}
+              onClick={() => setActiveTab("home")}
             >
-              {city}
+              <span className="sidebar-icon">🌪️</span>
+              <span>Home</span>
             </div>
-          ))
-        ) : (
-          <div className="dropdown-item no-results">Không tìm thấy</div>
-        )}
-      </div>
-    )}
-  </div>
-</div>
+            
+            <div 
+              className={`sidebar-item ${activeTab === "weather" ? "active" : ""}`}
+              onClick={() => setActiveTab("weather")}
+            >
+              <span className="sidebar-icon">⛅</span>
+              <span>Weather</span>
+            </div>
+            
+            <div 
+              className={`sidebar-item ${activeTab === "cities" ? "active" : ""}`}
+              onClick={() => setActiveTab("cities")}
+            >
+              <span className="sidebar-icon">📋</span>
+              <span>Cities</span>
+            </div>
+            
+            <div 
+              className={`sidebar-item ${activeTab === "map" ? "active" : ""}`}
+              onClick={() => setActiveTab("map")}
+            >
+              <span className="sidebar-icon">⚠️</span>
+              <span>warning</span>
+            </div>
+            
+            <div 
+              className={`sidebar-item ${activeTab === "settings" ? "active" : ""}`}
+              onClick={() => setActiveTab("settings")}
+            >
+              <span className="sidebar-icon">⚙️</span>
+              <span>Settings</span>
+            </div>
+          </div>
 
-
-          <div className="nav-right">
-            {/* User Dropdown Menu */}
-            <div className="user-menu-container">
-              <button className="user-menu-button" onClick={() => setShowUserDropdown(!showUserDropdown)}>
-                <User className="user-icon" />
-                {isLoggedIn && <span className="user-name">{userInfo.name.split(" ")[0]}</span>}
+          {/* Logout Button at Bottom */}
+          {profileData ? (
+            <div className="sidebar-footer">
+              <button className="logout-btn" onClick={handleLogout}>
+                <span className="sidebar-icon">🚪</span>
+                <span>Logout</span>
               </button>
+            </div>
+          ) : (
+            <div className="sidebar-footer">
+              <a href="/login" className="login-btn">
+                <span className="sidebar-icon">🔑</span>
+                <span>Login</span>
+              </a>
+            </div>
+          )}
+        </div>
 
-              {showUserDropdown && (
-                <div className="user-dropdown">
-                  {isLoggedIn ? (
-                    <>
-                      <div className="user-info">
-                        <div className="user-avatar">
-                          <User className="avatar-icon" />
-                        </div>
-                        <div className="user-details">
-                          <div className="user-display-name">{userInfo.name}</div>
-                          <div className="user-email">{userInfo.email}</div>
-                        </div>
+        {/* Main Content */}
+        <div className="main-content">
+          {/* Weather Tab - Main View */}
+          {activeTab === "weather" && (
+            <div className="content-section">
+              {/* Search Bar */}
+              <div className="search-container">
+                <form
+                  className="search-form"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    loadWeather(city);
+                  }}
+                >
+                  <input
+                    type="text"
+                    className="search-input"
+                    placeholder="Search for cities"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                  />
+                </form>
+              </div>
+
+            {/* Weather Content Grid */}
+            <div className="weather-content-grid">
+              {/* Left Column */}
+              <div className="left-column">
+                {/* Main Weather Display */}
+                {weatherData && (
+                  <div className="main-weather-section">
+                    <div className="city-header">
+                      <h1 className="city-name">{weatherData.city}</h1>
+                      <p className="chance-rain">Độ ẩm: {weatherData.humidity}%</p>
+                    </div>
+
+                    <div className="current-temp-display">
+                      <div className="temperature-large">
+                        {Math.round(weatherData.temperatureC)}°C
                       </div>
-                      <div className="dropdown-divider"></div>
-                      <button className="dropdown-menu-item" onClick={handleSettings}>
-                        <Settings className="menu-icon" /> Cài đặt
-                      </button>
-                      <button className="dropdown-menu-item logout-item" onClick={handleLogout}>
-                        <LogOut className="menu-icon" /> Đăng xuất
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button className="dropdown-menu-item" onClick={handleLogin}>
-                        <LogIn className="menu-icon" /> Đăng nhập
-                      </button>
-                      <button className="dropdown-menu-item" onClick={handleRegister}>
-                        <UserPlus className="menu-icon" /> Đăng ký
-                      </button>
-                    </>
-                  )}
-                </div>
+                      <div className="temp-details">
+                        <img 
+                          src={weatherData.icon} 
+                          alt={conditionMap[weatherData.condition] ||weatherData.condition} 
+                          className="weather-icon"
+                        />
+                        <p className="condition-text">{conditionMap[weatherData.condition] ||weatherData.condition}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                  
+
+               {/* Today's Forecast */}
+          <div className="hourly-forecast-section">
+            <h3 className="section-title">DỰ BÁO HÔM NAY</h3>
+            <div className="hourly-items">
+              {hourlyData.length > 0 ? (
+                hourlyData.map((hour, index) => (
+                  <div key={index} className="hourly-item">
+                    <div className="hourly-time">{hour.time}</div>
+                    <div className="hourly-icon">{hour.icon}</div>
+                    <div className="hourly-temp">{hour.temp}</div>
+                  </div>
+                ))
+              ) : (
+                <p>Đang tải dữ liệu...</p>
               )}
             </div>
           </div>
-        </nav>
-
-        {/* MAIN WEATHER CONTENT */}
-        <main className="weather-main">
-        <div className={`clock-section ${showDropdown ? "clock-hidden" : ""}`}>
 
 
-            <div className="date">
-              {currentTime.toLocaleDateString("vi-VN", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </div>
-            <div className="time">
-              {currentTime.toLocaleTimeString("vi-VN", {
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-              })}
-            </div>
-          </div>
+                  {/* Air Conditions */}
+                  {weatherData && (
+                    <div className="air-conditions-section">
+                      <div className="section-header">
+                        <h3 className="section-title">ĐIỀU HÒA KHÔNG KHÍ</h3>
+                        
+                      </div>
+                      
+                      <div className="air-conditions-grid">
+                        <div className="condition-item">
+                          <div className="condition-label">
+                            <span className="condition-icon">🌡️</span>
+                            Cảm giác thực tế
+                          </div>
+                          <div className="condition-value">{weatherData.temperatureC}°</div>
+                        </div>
 
-          {error && <div className="error-message">{error}</div>}
+                        <div className="condition-item">
+                          <div className="condition-label">
+                            <span className="condition-icon">💨</span>
+                            Gió
+                          </div>
+                          <div className="condition-value">{weatherData.windKph} km/h</div>
+                        </div>
 
-          <div className={`weather-card ${isAnimating ? "animate" : ""}`}>
-            <div className="weather-city">
-              <MapPin className="location-icon" />
-              {weatherData.city || "Chọn thành phố"}
-            </div>
+                        <div className="condition-item">
+                          <div className="condition-label">
+                            <span className="condition-icon">💧</span>
+                            Khả năng mưa
+                          </div>
+                          <div className="condition-value">{weatherData.humidity}%</div>
+                        </div>
 
-            <div className="weather-condition">
-              {getWeatherIcon(weatherData.condition)}
-              <div className={`temperature ${getTemperatureColor(weatherData.temperatureC)}`}>
-                {weatherData.temperatureC || "--"}°C
+                        <div className="condition-item">
+                          <div className="condition-label">
+                            <span className="condition-icon">☀️</span>
+                            Chỉ số UV
+                          </div>
+                          <div className="condition-value">3</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Right Column - 7 Day Forecast */}
+                <div className="right-column">
+                  <h3 className="section-title">thời tiết 7 ngày tới</h3>
+                  
+                  {weather7daysData && (
+                    <div className="forecast-list">
+                      {weather7daysData.slice(0, 7).map((day, index) => {
+                        // Map conditions to icons
+                        const getWeatherIcon = (condition) => {
+                          if (index === 0) return "☀️";
+                          if (index === 1 || index === 2) return "☀️";
+                          if (index === 3 || index === 4) return "☁️";
+                          if (index === 5) return "🌧️";
+                          return "⚡";
+                        };
+
+                        const getConditionName = () => {
+                          if (index === 0 || index === 1 || index === 2) return "Nắng";
+                          if (index === 3 || index === 4) return "Mây";
+                          if (index === 5) return "Mưa";
+                          return "Bão";
+                        };
+
+                        const getDayName = (dateStr) => {
+                          if (index === 0) return "Hôm nay";
+                          const days = ["Chủ nhật", "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy"];
+                          const date = new Date(dateStr);
+                          return days[date.getDay()];
+                        };
+
+                        return (
+                          <div key={index} className="forecast-day-item">
+                            <div className="day-name">{getDayName(day.date)}</div>
+                            <div className="day-weather">
+                              <span className="day-icon">{getWeatherIcon()}</span>
+                              <span className="day-condition">{getConditionName()}</span>
+                            </div>
+                            <div className="day-temps">
+                              <span className="temp-high">{day.maxtemp_c}°</span>
+                              <span className="temp-low">/{day.mintemp_c}°</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="condition-text">{weatherData.condition || "Đang tải..."}</div>
             </div>
+          )}
 
-            <div className="weather-details">
-              <div className="weather-detail">
-                <Droplets className="detail-icon" />
-                <span>{weatherData.humidity || "--"}%</span>
-                <small>Độ ẩm</small>
+          {/* Cities Tab */}
+          {activeTab === "cities" && (
+            <div className="content-section">
+              <h2 className="page-title">Compare Cities</h2>
+
+              <div className="compare-form-container">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (city1 && city2) {
+                      fetchCompareData(city1, city2);
+                    }
+                  }}
+                >
+                  <div className="compare-inputs">
+                    <select
+                      className="compare-select"
+                      value={city1}
+                      onChange={(e) => setCity1(e.target.value)}
+                    >
+                      <option value="">-- Select City 1 --</option>
+                      {cityOptions.map((c, index) => (
+                        <option key={index} value={c}>{c}</option>
+                      ))}
+                    </select>
+
+                    <div className="compare-icon">🔄</div>
+
+                    <select
+                      className="compare-select"
+                      value={city2}
+                      onChange={(e) => setCity2(e.target.value)}
+                    >
+                      <option value="">-- Select City 2 --</option>
+                      {cityOptions.map((c, index) => (
+                        <option key={index} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <button className="compare-btn" type="submit">
+                    Compare
+                  </button>
+                </form>
               </div>
-              <div className="weather-detail">
-                <Wind className="detail-icon" />
-                <span>{weatherData.windKph || "--"} km/h</span>
-                <small>Gió</small>
-              </div>
-              <div className="weather-detail">
-                <Eye className="detail-icon" />
-                <span>{weatherData.visibilityKm || "--"} km</span>
-                <small>Tầm nhìn</small>
-              </div>
-              <div className="weather-detail">
-                <Gauge className="detail-icon" />
-                <span>UV {weatherData.uvIndex || "--"}</span>
-                <small>Chỉ số UV</small>
+
+              {compareData && (
+                <div className="compare-result">
+                  <h3 className="compare-result-title">Comparison Results</h3>
+                  <div className="compare-result-content">
+                    <p>{compareData.data.messgerCondition}</p>
+                    <p>{compareData.data.messgersTemperatureC}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Settings Tab - Alerts */}
+          {activeTab === "settings" && (
+            <div className="content-section">
+              <h2 className="page-title">Weather Alerts</h2>
+
+              {favoriteData ? (
+                <div className="alert-card">
+                  <div className="alert-icon">⚠️</div>
+                  <div className="alert-content">
+                    <h4 className="alert-location">
+                      {favoriteData.city}{favoriteData.country ? `, ${favoriteData.country}` : ''}
+                    </h4>
+                    <p className="alert-message">{favoriteData.weatherMessage}</p>
+                    <p className="alert-temp">{favoriteData.temperature} °C</p>
+                    
+                    {/* Hiển thị thêm thông tin nếu có */}
+                    {favoriteData.condition && (
+                      <div className="alert-extra-info">
+                        <span className="info-badge">
+                          <span className="badge-icon">🌤️</span>
+                          Condition: {favoriteData.condition}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="no-alert-message">
+                  <div className="no-alert-icon">🔔</div>
+                  <h3>No Weather Alert</h3>
+                  <p>Go to "Alerts" tab to create a weather alert for your city.</p>
+                  <button 
+                    className="go-alert-btn"
+                    onClick={() => setActiveTab("map")}
+                  >
+                    Create Alert
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Home Tab */}
+          {activeTab === "home" && (
+            <div className="content-section">
+              <h2 className="page-title">Welcome to Weather App</h2>
+              <p style={{ color: '#94a3b8', textAlign: 'center', marginTop: '20px' }}>
+                Select a menu item from the sidebar to get started
+              </p>
+            </div>
+          )}
+
+          {/* Map Tab - Weather Alert Form */}
+          {activeTab === "map" && (
+            <div className="content-section">
+              <h2 className="page-title">Weather Alert Lookup</h2>
+
+              <div className="alert-form-container">
+                <form
+                  className="alert-form"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (city && city.trim()) {
+                      const selectedCondition = document.querySelector('input[name="condition"]:checked')?.value || 'Rain';
+                      try {
+                        const favorite = await loadfetchFavorite(city, selectedCondition);
+                        setFavoriteData(favorite.data); // lưu data để hiển thị
+                        setActiveTab("settings");
+                      } catch (error) {
+                        alert("Error fetching alert: " + "bạn cần đăng nhập để sử dụng chức năng này" );
+                      }
+                    }
+                  }}
+                >
+                  <div className="form-group">
+                    <label className="form-label">
+                      <span className="label-icon">📍</span>
+                      Tên thành phố
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="Nhập tên thành phố (ví dụ: Ha Noi, Da Nang)"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">
+                      <span className="label-icon">🌤️</span>
+                      Điều kiện thời tiết
+                    </label>
+                    <div className="condition-options">
+                      <label className="condition-radio">
+                        <input
+                          type="radio"
+                          name="condition"
+                          value="Rain"
+                          defaultChecked
+                        />
+                        <div className="radio-card">
+                          <span className="radio-icon">🌧️</span>
+                          <span className="radio-label">Rain</span>
+                          <span className="radio-desc">Cảnh báo mưa</span>
+                        </div>
+                      </label>
+
+                      <label className="condition-radio">
+                        <input
+                          type="radio"
+                          name="condition"
+                          value="Sunny"
+                        />
+                        <div className="radio-card">
+                          <span className="radio-icon">☀️</span>
+                          <span className="radio-label">Sunny</span>
+                          <span className="radio-desc">Cảnh báo nắng</span>
+                        </div>
+                      </label>
+
+                      <label className="condition-radio">
+                        <input
+                          type="radio"
+                          name="condition"
+                          value="Cloudy"
+                        />
+                        <div className="radio-card">
+                          <span className="radio-icon">☁️</span>
+                          <span className="radio-label">Cloudy</span>
+                          <span className="radio-desc">Cảnh báo mây</span>
+                        </div>
+                      </label>
+
+                      <label className="condition-radio">
+                        <input
+                          type="radio"
+                          name="condition"
+                          value="Storm"
+                        />
+                        <div className="radio-card">
+                          <span className="radio-icon">⛈️</span>
+                          <span className="radio-label">Storm</span>
+                          <span className="radio-desc">Cảnh báo bão</span>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  <button className="alert-submit-btn" type="submit">
+                    <span>🔔</span>
+                    Lấy cảnh báo thời tiết
+                  </button>
+                </form>
+
+                <div className="info-box">
+                  <div className="info-icon">💡</div>
+                  <div className="info-content">
+                    <h4>Hướng dẫn sử dụng</h4>
+                    <p>Nhập tên thành phố và chọn điều kiện thời tiết bạn muốn nhận cảnh báo. Hệ thống sẽ hiển thị thông báo cảnh báo phù hợp cho thành phố đó.</p>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </main>
+          )}
+        </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;

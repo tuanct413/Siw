@@ -27,6 +27,7 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public GET request
                         .requestMatchers(HttpMethod.GET, "/weather/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/weather/v1/weatheroneday").permitAll()
 
                         // POST/PUT/DELETE cần token
                         .requestMatchers(HttpMethod.POST, "/weather/**").authenticated()
@@ -34,8 +35,8 @@ public class WebSecurityConfig {
                         // Public users API
                         .requestMatchers("/users/create").permitAll()
                         .requestMatchers("/users/verify").permitAll()
-                        .requestMatchers("/users/login").permitAll()
-                        .requestMatchers("/users/forgot-password").permitAll()
+                        .requestMatchers("/auth/login").permitAll()
+                        .requestMatchers("/auth/forgot-password").permitAll()
                         .requestMatchers("/users/v1/verify").permitAll()
 
                         // Reports API: cần token

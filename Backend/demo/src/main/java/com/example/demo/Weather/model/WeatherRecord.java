@@ -46,4 +46,8 @@ public class WeatherRecord {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;  // Thời điểm lưu bản ghi
+
+
+    @Column(name="icon")
+    private String icon;
 }

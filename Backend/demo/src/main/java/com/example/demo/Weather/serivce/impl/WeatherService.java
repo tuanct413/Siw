@@ -1,5 +1,7 @@
 package com.example.demo.Weather.serivce.impl;
 
+import com.example.demo.Weather.DTO.WeatherInOneDay;
+import com.example.demo.Weather.serivce.Interface.WeatherInOneDayInterface;
 import com.example.demo.dto.*;
 import com.example.demo.Weather.model.Location;
 import com.example.demo.User.model.User;
@@ -19,10 +21,13 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
-public class WeatherService implements WeatherServiceInterface, WeatherGetWeather {
+public class WeatherService implements WeatherServiceInterface, WeatherGetWeather , WeatherInOneDayInterface {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -38,6 +43,7 @@ public class WeatherService implements WeatherServiceInterface, WeatherGetWeathe
     @Value("${weather.api.url1}")
     private String apiurl7Day;
 
+
     public WeatherService(LocationRepository locationRepository  , UserRepository userRepository) {
         this.locationRepository = locationRepository;
         this.userRepository = userRepository;
@@ -45,14 +51,14 @@ public class WeatherService implements WeatherServiceInterface, WeatherGetWeathe
 
     @Override
     public WeatherSummary getWeather(String city) {
-        String url = apiUrl + "?key=" + apiKey + "&q=" + city + "&aqi=no";
+        String url = apiUrl + "/current.json?key=" + apiKey + "&q=" + city + "&aqi=no";
 
         try {
             return fetchWeather(url);
         } catch (Exception e) {
             // fallback về Hanoi
             String defaultCity = "hanoi";
-            String fallbackUrl = apiUrl + "?key=" + apiKey + "&q=" + defaultCity + "&aqi=no";
+            String fallbackUrl = apiUrl + "/current.json?key=" + apiKey + "&q=" + defaultCity + "&aqi=no";
             return fetchWeather(fallbackUrl);
         }
     }
@@ -121,6 +127,7 @@ public class WeatherService implements WeatherServiceInterface, WeatherGetWeathe
         summary.setWindKph(((Number) current.get("wind_kph")).doubleValue());
         summary.setVisibilityKm(((Number) current.get("vis_km")).doubleValue());
         summary.setUvIndex(((Number) current.get("uv")).intValue());
+        summary.setIcon((String) condition.get("icon"));
 
         return summary;
     }
@@ -282,6 +289,55 @@ public class WeatherService implements WeatherServiceInterface, WeatherGetWeathe
                    "lấy thành công",
                    data
            );
+    }
+    @Override
+    public List<WeatherInOneDay> getAllWeatherInOneday(String city){
+        String url = apiurl7Day + "?key=" + apiKey + "&q=" + city + "&days=1";
+        try{
+            // chạy hàm DTO dữ liệu và trả về
+            return  fetchAndMapWeather(url);
+        }
+        catch (Exception e){
+            String defaultCity = "hanoi";
+            String fallbackUrl = apiUrl + "?key=" + apiKey + "&q=" + defaultCity + "&days=1";
+            // chạy hàm DTO dữ liệu và trả về
+            return fetchAndMapWeather(fallbackUrl);
+        }
+    }
+    //
+    private List<WeatherInOneDay> fetchAndMapWeather(String url) {
+        RestTemplate restTemplate = new RestTemplate();
+        Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+
+        // lấy dữ liệu trong JSON: forecast.forecastday[0].hour
+        List<Map<String, Object>> forecastDays =
+                (List<Map<String, Object>>) ((Map<String, Object>) response.get("forecast")).get("forecastday");
+        List<Map<String, Object>> hours = (List<Map<String, Object>>) forecastDays.get(0).get("hour");
+
+        LocalDateTime now = LocalDateTime.now();
+
+        return hours.stream()
+                .map(h -> {
+                    WeatherInOneDay  dto = new WeatherInOneDay();
+                    dto.setMaxtemp_c(((Number) h.get("temp_c")).doubleValue());
+                    dto.setMintemp_c(((Number) h.get("temp_c")).doubleValue());
+
+                    // convert time string -> LocalDateTime
+                    String timeStr = (String) h.get("time"); // "2025-10-01 14:00"
+                    LocalDateTime time = LocalDateTime.parse(timeStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+                    dto.setCreatedAt(time);
+
+                    Map<String, Object> condition = (Map<String, Object>) h.get("condition");
+                    dto.setConditionText((String) condition.get("text"));
+                    dto.setConditionIcon((String) condition.get("icon"));
+
+                    return dto;
+                })
+                // chỉ lấy từ thời điểm hiện tại trở đi
+                .filter(dto -> dto.getCreatedAt().isAfter(now))
+                //chỉ lấy giờ lẻ
+                .limit(6)
+                .collect(Collectors.toList());
     }
 
 }

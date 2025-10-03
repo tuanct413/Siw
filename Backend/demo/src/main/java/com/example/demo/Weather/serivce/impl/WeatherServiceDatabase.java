@@ -51,6 +51,7 @@ public class WeatherServiceDatabase implements WeatherGetWeather {
         summary.setWindKph(record.getWindKph());
         summary.setVisibilityKm(record.getVisibilityKm());
         summary.setUvIndex(record.getUvIndex());
+        summary.setIcon(record.getIcon());
         return summary;
     }
 
@@ -64,6 +65,7 @@ public class WeatherServiceDatabase implements WeatherGetWeather {
                 .windKph(summary.getWindKph())
                 .visibilityKm(summary.getVisibilityKm())
                 .uvIndex(summary.getUvIndex())
+                .icon(summary.getIcon())
                 .build();
     }
 }

@@ -1,4 +1,6 @@
 package com.example.demo.Weather.controller;
+import com.example.demo.Weather.DTO.WeatherInOneDay;
+import com.example.demo.Weather.serivce.Interface.WeatherInOneDayInterface;
 import com.example.demo.dto.*;
 import com.example.demo.User.DTO.CustomUserDetails;
 import com.example.demo.Weather.DTO.LocationRequest;
@@ -23,10 +25,13 @@ import java.util.Map;
 public class WeatherController {
     private final WeatherServiceInterface weatherServiceImp;
     private final WeatherGetWeather weatherGetWeather;
+    private final WeatherInOneDayInterface weatherInOneDay;
 
-    public WeatherController(WeatherServiceInterface weatherServiceImp ,WeatherGetWeather weatherGetWeather ) {
+
+    public WeatherController(WeatherServiceInterface weatherServiceImp ,WeatherGetWeather weatherGetWeather ,WeatherInOneDayInterface weatherInOneDay) {
         this.weatherServiceImp = weatherServiceImp;
         this.weatherGetWeather = weatherGetWeather;
+        this.weatherInOneDay = weatherInOneDay;
     }
     @GetMapping("/find")
     public WeatherSummary findUserByLocal(@RequestParam("local") String local ) {
@@ -82,9 +87,14 @@ public class WeatherController {
         ApiResponse<Map<String, Object>> response = weatherServiceImp.setWeatherAlert(userid,city,condition);
         return  ResponseEntity.ok(response);
     }
-    @GetMapping("v1/sosanhthanhpho")
+    @GetMapping("v1/comparecity")
     public ResponseEntity<ApiResponse<Map<String, Object>>> compareWeather(@RequestParam("city")String city1,@RequestParam("citynext") String city2){
         ApiResponse<Map<String, Object>> response = weatherServiceImp.compareWeather(city1,city2);
         return ResponseEntity.ok(response);
+    }
+    @GetMapping("v1/weatheroneday")
+    public List<WeatherInOneDay> weatherInOneDay(@RequestParam ("city")String city){
+        List<WeatherInOneDay> response = weatherInOneDay.getAllWeatherInOneday(city);
+        return ResponseEntity.ok(response).getBody();
     }
 }

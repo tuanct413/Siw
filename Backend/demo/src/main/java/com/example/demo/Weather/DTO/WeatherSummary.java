@@ -1,6 +1,10 @@
 package com.example.demo.Weather.DTO;
 
 
+import org.hibernate.type.descriptor.java.ShortPrimitiveArrayJavaType;
+
+import javax.swing.*;
+
 public class WeatherSummary {
     private String city;
     private String country ;
@@ -10,8 +14,16 @@ public class WeatherSummary {
     private double windKph;        // Gió km/h
     private double visibilityKm;   // Tầm nhìn km
     private int uvIndex;           // Chỉ số UV
+    private String icon;
 
 
+    public String getIcon() {
+        return icon;
+    }
+
+    public void setIcon(String icon) {
+        this.icon = icon;
+    }
 
     // getters & setters
     public double getTemperatureC() {
