@@ -60,7 +60,7 @@ public class UserService implements UserServiceinterface {
                 userRepository.save(exitingUser);
             }
             response.put("message", "Cập nhật thành công");
-            response.put("data", exitingUser);
+
             return ResponseEntity.ok(response);
         }
         else {

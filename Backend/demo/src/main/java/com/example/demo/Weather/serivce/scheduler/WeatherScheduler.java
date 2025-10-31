@@ -20,7 +20,7 @@ public class WeatherScheduler {
     // Chạy mỗi ngày 1 lần lúc 7h sáng
     @Scheduled(cron = "0 0 7 * * *")
     public void fetchDailyWeather() {
-        // Giả sử bạn có danh sách các city cần theo dõi
+        // Giả sử  có danh sách các city cần theo dõi
         String[] cities = {"Hanoi", "Yen Bai", "Ho Chi Minh"};
 
         for (String city : cities) {

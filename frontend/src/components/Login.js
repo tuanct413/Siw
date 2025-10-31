@@ -3,8 +3,6 @@ import "../styles/Login.css";
 import { useNavigate } from "react-router-dom";
 import { login } from "../api/login/authService";
 
-
-
 const Login = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -24,13 +22,8 @@ const Login = () => {
 
     try {
       const data = await login(formData.email, formData.password);
-
-      // Lưu token vào cookie 1 giờ
       localStorage.setItem("token", data.token);
-
-
       alert(data.message || "Đăng nhập thành công!");
-
       navigate("/home");
     } catch (error) {
       console.error("❌ Login error:", error);
@@ -101,6 +94,13 @@ const Login = () => {
             </button>
           </div>
         </form>
+
+        {/* 👉 Thêm link quên mật khẩu */}
+        <div className="forgot-password-link">
+          <button onClick={() => navigate("/forgotpassword")} className="link-btn">
+            Quên mật khẩu?
+          </button>
+        </div>
       </div>
     </div>
   );

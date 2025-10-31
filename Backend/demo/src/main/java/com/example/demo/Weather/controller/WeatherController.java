@@ -84,6 +84,7 @@ public class WeatherController {
             ,@RequestParam("condition") String condition , Authentication authentication) {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         Long userid = userDetails.getUserId();
+        weatherServiceImp.saveOrUpdateAlert(userid,city,condition);
         ApiResponse<Map<String, Object>> response = weatherServiceImp.setWeatherAlert(userid,city,condition);
         return  ResponseEntity.ok(response);
     }

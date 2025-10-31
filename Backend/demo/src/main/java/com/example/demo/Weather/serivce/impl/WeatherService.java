@@ -1,7 +1,10 @@
 package com.example.demo.Weather.serivce.impl;
 
 import com.example.demo.Weather.DTO.WeatherInOneDay;
+import com.example.demo.Weather.Repository.WeatherAlertRepository;
+import com.example.demo.Weather.model.WeatherAlert;
 import com.example.demo.Weather.serivce.Interface.WeatherInOneDayInterface;
+import com.example.demo.common.mail.MailService;
 import com.example.demo.dto.*;
 import com.example.demo.Weather.model.Location;
 import com.example.demo.User.model.User;
@@ -13,12 +16,15 @@ import com.example.demo.Weather.DTO.WeatherSummary;
 import com.example.demo.Weather.serivce.Interface.WeatherGetWeather;
 import com.example.demo.Weather.serivce.Interface.WeatherServiceInterface;
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
+
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -32,6 +38,9 @@ public class WeatherService implements WeatherServiceInterface, WeatherGetWeathe
     private final RestTemplate restTemplate = new RestTemplate();
 
     private final LocationRepository  locationRepository;
+    private  final WeatherAlertRepository weatherAlertRepository;
+    private final  WeatherNotificationService weatherNotificationService;
+
     private UserRepository userRepository;
 
     @Value("${weather.api.key}")
@@ -44,9 +53,13 @@ public class WeatherService implements WeatherServiceInterface, WeatherGetWeathe
     private String apiurl7Day;
 
 
-    public WeatherService(LocationRepository locationRepository  , UserRepository userRepository) {
+
+    public WeatherService(LocationRepository locationRepository  , UserRepository userRepository
+    ,WeatherAlertRepository weatherAlertRepository,WeatherNotificationService weatherNotificationService) {
         this.locationRepository = locationRepository;
         this.userRepository = userRepository;
+        this.weatherNotificationService = weatherNotificationService;
+        this.weatherAlertRepository = weatherAlertRepository;
     }
 
     @Override
@@ -64,49 +77,92 @@ public class WeatherService implements WeatherServiceInterface, WeatherGetWeathe
     }
 
     @Override
-    public ApiResponse<Map<String, Object>> setWeatherAlert(Long userId, String city, String condition) {
-        WeatherSummary weather = getWeather(city);
-        boolean alertweather = false;
-        boolean alerttemperature = false;
-        String weatherMessage = "";
-        String temperatureMessage="";
-        double temp = weather.getTemperatureC(); // lấy thời tiết hiện tại
 
-        if(temp < 10){
-            alerttemperature = true;
-            temperatureMessage= "thời tiết đang rất Lạnh nên mắc áo ấm " +city ;
+    public ApiResponse<Map<String, Object>> setWeatherAlert(Long userId, String city, String condition) {
+        // Lấy thông tin thời tiết
+        WeatherSummary weather = getWeather(city);
+
+        boolean alertWeather = false;
+        boolean alertTemperature = false;
+        String weatherMessage = "";
+        String temperatureMessage = "";
+
+        double temp = weather.getTemperatureC(); // Nhiệt độ hiện tại
+
+        // Cảnh báo theo nhiệt độ
+        if (temp < 10) {
+            alertTemperature = true;
+            temperatureMessage = "🌡️ Thời tiết ở " + city + " đang rất lạnh, hãy mặc áo ấm nhé!";
+        } else if (temp > 30) {
+            alertTemperature = true;
+            temperatureMessage = "🔥 Thời tiết ở " + city + " đang khá nóng, nên hạn chế ra ngoài.";
+        } else if (temp >= 20 && temp <= 30) {
+            alertTemperature = true;
+            temperatureMessage = "☀️ Thời tiết ở " + city + " hôm nay thật tuyệt vời!";
         }
-        else if(temp > 30 ){
-            alerttemperature = true;
-            temperatureMessage= "thời tiết đang khá nóng hạn chế ra đường " +city ;
+
+        // Cảnh báo điều kiện thời tiết (mưa, gió, sấm, v.v.)
+        if (weather.getCondition().toLowerCase().contains(condition.toLowerCase())) {
+            alertWeather = true;
+            weatherMessage = "⚠️ Cảnh báo: Thời tiết tại " + city + " hiện có " + condition + ".";
+        } else {
+            weatherMessage = "✅ Không có cảnh báo: Điều kiện '" + condition + "' chưa xảy ra tại " + city + ".";
         }
-        else if (temp >= 20 && temp <= 30 ){
-            alerttemperature = true;
-            temperatureMessage= "thời tiết quá đẹp " +city ;
-        }
-        // Cảnh báo điều kiện thời tiết
-        if(weather.getCondition().toLowerCase().contains(condition.toLowerCase())){
-            alertweather = true;
-            weatherMessage = "Cảnh báo: Thời tiết tại " + city + " hiện tại có " + condition;
-        }
-        else {
-            weatherMessage = "Chưa có cảnh báo. Điều kiện '" + condition + "' chưa xảy ra ở " + city;
-        }
+        // Chuẩn bị dữ liệu trả về
         Map<String, Object> data = new HashMap<>();
-        data.put("city", weather.getCity());
+        data.put("city", city); // ⚠️ DÙNG city từ request, KHÔNG dùng weather.getCity()
         data.put("country", weather.getCountry());
         data.put("temperature", weather.getTemperatureC());
         data.put("condition", weather.getCondition());
-        data.put("alertweather", alertweather );
-        data.put("weatherMessage",weatherMessage);
-        data.put("temperatureMessage",temperatureMessage);
-        data.put("alertTemperature",alerttemperature);
+        data.put("alertWeather", alertWeather);
+        data.put("alertTemperature", alertTemperature);
+        data.put("weatherMessage", weatherMessage);
+        data.put("temperatureMessage", temperatureMessage);
+
+        // ⚡ Gửi mail bất đồng bộ (chạy song song)
+        if (alertTemperature || alertWeather) {
+            String subject = "🌧️ Cảnh báo thời tiết cho khu vực " + city;
+            String content = (alertTemperature ? temperatureMessage + "<br><br>" : "") + (alertWeather ? weatherMessage : "");
+            weatherNotificationService.sendWeatherAlertAsync(userId, city, subject, content);
+        }
         return new ApiResponse<>(
-                "lấy thành công",
+                "Lấy dữ liệu cảnh báo thành công",
                 data
         );
-
     }
+
+    public void saveOrUpdateAlert(Long userId, String city, String condition) {
+        User user = userRepository.findById(userId).orElseThrow();
+
+        // Kiểm tra xem user này đã có cảnh báo cho city + condition chưa
+        Optional<WeatherAlert> existingAlertOpt =
+                weatherAlertRepository.findByUserAndCityAndCondition(user, city, condition);
+
+        WeatherAlert alert;
+
+        if (existingAlertOpt.isPresent()) {
+            // 🔁 Nếu đã tồn tại thì cập nhật lại thông tin (vd: bật lại cảnh báo, reset thời gian)
+            alert = existingAlertOpt.get();
+            alert.setActive(true);
+            alert.setLastSent(LocalDateTime.now());
+            System.out.println("♻️ Đã cập nhật lại cảnh báo (đã tồn tại)");
+        } else {
+            // 🆕 Nếu chưa có, tạo mới
+            alert = WeatherAlert.builder()
+                    .user(user)
+                    .city(city)
+                    .condition(condition)
+                    .active(true)
+                    .lastSent(LocalDateTime.now())
+                    .build();
+            System.out.println("🆕 Tạo mới cảnh báo thời tiết");
+        }
+
+        weatherAlertRepository.save(alert);
+        System.out.println("💾 Đã lưu/cập nhật cảnh báo vào DB cho userId: " + userId);
+    }
+
+
     private WeatherSummary fetchWeather(String url) {
         Map<String, Object> response = restTemplate.getForObject(url, Map.class);
         if (response == null) {

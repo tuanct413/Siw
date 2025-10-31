@@ -25,4 +25,6 @@ public interface WeatherServiceInterface {
 
     ApiResponse<Map<String, Object>> compareWeather(String city1, String city2);
 
+    void saveOrUpdateAlert(Long userId, String city, String condition);
+
 }

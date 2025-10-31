@@ -252,4 +252,121 @@ public class MailService {
         return code;
     }
 
+    public void sendWarningEmail(String to, String subject, String warningMessage) throws MessagingException {
+        String htmlContent = """
+        <!DOCTYPE html>
+        <html lang="vi">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Cảnh báo hệ thống</title>
+            <style>
+                body {
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    background-color: #f5f7fa;
+                    margin: 0;
+                    padding: 30px;
+                }
+
+                .email-container {
+                    max-width: 600px;
+                    margin: auto;
+                    background: #ffffff;
+                    border-radius: 12px;
+                    overflow: hidden;
+                    box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+                }
+
+                .header {
+                    background: linear-gradient(135deg, #ff6b6b, #f94d6a);
+                    padding: 30px;
+                    text-align: center;
+                    color: white;
+                }
+
+                .header h1 {
+                    font-size: 26px;
+                    margin: 0;
+                }
+
+                .content {
+                    padding: 30px;
+                }
+
+                .message {
+                    font-size: 16px;
+                    color: #333;
+                    line-height: 1.6;
+                    margin-bottom: 25px;
+                }
+
+                .warning-box {
+                    background-color: #fff3cd;
+                    border-left: 5px solid #ffc107;
+                    padding: 20px;
+                    border-radius: 8px;
+                    font-size: 15px;
+                    color: #856404;
+                }
+
+                .footer {
+                    text-align: center;
+                    font-size: 13px;
+                    color: #888;
+                    padding: 20px;
+                    background-color: #fafafa;
+                }
+
+                @media (max-width: 600px) {
+                    .content {
+                        padding: 20px;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="email-container">
+                <div class="header">
+                    <h1>⚠️ Cảnh Báo Hệ Thống</h1>
+                </div>
+
+                <div class="content">
+                    <div class="message">
+                        Xin chào,<br><br>
+                        Hệ thống vừa phát hiện một cảnh báo quan trọng:
+                    </div>
+
+                    <div class="warning-box">
+                        {{WARNING_MESSAGE}}
+                    </div>
+
+                    <div class="message" style="margin-top: 30px;">
+                        Vui lòng kiểm tra lại ngay để đảm bảo an toàn và ổn định hệ thống.
+                    </div>
+                </div>
+
+                <div class="footer">
+                    Email này được gửi tự động, vui lòng không phản hồi lại.<br>
+                    © 2024 Hệ thống cảnh báo thông minh.
+                </div>
+            </div>
+        </body>
+        </html>
+        """;
+
+        // Thay thế nội dung cảnh báo
+        htmlContent = htmlContent.replace("{{WARNING_MESSAGE}}", warningMessage);
+
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        helper.setTo(to);
+        helper.setSubject(subject);
+        helper.setText(htmlContent, true);
+
+        mailSender.send(message);
+
+        System.out.println("📧 Cảnh báo đã gửi tới: " + to);
+    }
+
+
 }
