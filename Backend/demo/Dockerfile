@@ -1,26 +1,21 @@
-# ===== GIAI ĐOẠN BUILD =====
+# Giai đoạn build
 FROM maven:3.9.6-eclipse-temurin-21 AS build
 WORKDIR /app
 
-# Sao chép file pom.xml để cache dependency
-COPY Backend/demo/pom.xml .
+# copy pom.xml và tải dependency
+COPY pom.xml .
 RUN mvn dependency:go-offline
 
-# Sao chép toàn bộ source code
-COPY Backend/demo /app
-
-# Build ứng dụng (bỏ qua test để nhanh hơn)
+# copy toàn bộ source code và build
+COPY . .
 RUN mvn clean package -DskipTests
 
-# ===== GIAI ĐOẠN RUN =====
+# Giai đoạn chạy
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 
-# Sao chép file JAR đã build từ giai đoạn trước
+# copy file jar từ giai đoạn build
 COPY --from=build /app/target/*.jar app.jar
 
-# Mở port 8080 cho ứng dụng Spring Boot
 EXPOSE 8080
-
-# Câu lệnh khởi động ứng dụng
 CMD ["sh", "-c", "java -jar -Dserver.port=${PORT:-8080} app.jar"]
