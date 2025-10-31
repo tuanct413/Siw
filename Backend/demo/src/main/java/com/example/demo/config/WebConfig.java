@@ -15,10 +15,9 @@ public class WebConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")           // Áp dụng cho tất cả endpoint
                         .allowedOrigins(
-                            "http://localhost:3000", 
-                            "http://localhost:3001", 
-                            "https://siwsomething.netlify.app", //ftonend
-                            "https://siw.onrender.com" // onrender.com
+                            "http://localhost:3000",
+                            "http://localhost:3001",
+                                "https://siw-frontend.onrender.com"  // frontend Render
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")

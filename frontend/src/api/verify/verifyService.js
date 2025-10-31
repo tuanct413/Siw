@@ -1,7 +1,7 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8080/users";
-const API_URL1 = "http://localhost:8080/auth";
+const API_URL = "https://siw-backend.onrender.com/users";
+const API_URL1 = "https://siw-backend.onrender.com/auth";
 
 export const verify = async (email) => {
   try {
