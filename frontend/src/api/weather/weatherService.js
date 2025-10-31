@@ -1,7 +1,7 @@
 // src/services/weatherService.js
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:8080"; // chỉnh lại nếu khác
+const API_BASE_URL = "https://siw-backend.onrender.com"; // chỉnh lại nếu khác
 
 
 export const fetchWeather = async (cityName) => {
