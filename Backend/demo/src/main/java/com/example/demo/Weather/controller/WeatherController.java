@@ -98,4 +98,8 @@ public class WeatherController {
         List<WeatherInOneDay> response = weatherInOneDay.getAllWeatherInOneday(city);
         return ResponseEntity.ok(response).getBody();
     }
+    @GetMapping("/ping")
+    public String ping() {
+        return "pong";
+    }
 }

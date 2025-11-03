@@ -6,19 +6,22 @@ import com.example.demo.Weather.Repository.WeatherRecordRepository;
 import com.example.demo.Weather.serivce.impl.WeatherService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 @Component
 public class WeatherScheduler {
 
     private final WeatherService weatherService;
+    private final RestTemplate restTemplate = new RestTemplate();
+
 
     private final WeatherRecordRepository repository;
     public WeatherScheduler(WeatherService weatherService, WeatherRecordRepository repository) {
         this.weatherService = weatherService;
         this.repository = repository;
     }
-    // Chạy mỗi ngày 1 lần lúc 7h sáng
-    @Scheduled(cron = "0 0 7 * * *")
+    // Chạy mỗi ngày 1 lần 1 tiếng 1 lần
+    @Scheduled(cron = "0 0 * * * *")
     public void fetchDailyWeather() {
         // Giả sử  có danh sách các city cần theo dõi
         String[] cities = {"Hanoi", "Yen Bai", "Ho Chi Minh"};
@@ -40,6 +43,16 @@ public class WeatherScheduler {
                 .uvIndex(summary.getUvIndex())
                 .build();
     }
+    @Scheduled(fixedRate = 120000)
+    public void pingSelf() {
+        try {
+            String response = restTemplate.getForObject("http://localhost:8080/weather/ping", String.class);
+            System.out.println("Ping response: " + response);
+        } catch (Exception e) {
+            System.err.println("Ping failed: " + e.getMessage());
+        }
+    }
+
 
 
 }
