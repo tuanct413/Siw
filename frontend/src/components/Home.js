@@ -168,10 +168,10 @@ const loadfetchFavorite = async (cityName, weather) => {
             </div>
           ) : (
             <div className="sidebar-footer">
-              <a href="/login" className="login-btn">
+              <link to="/login" className="login-btn">
                 <span className="sidebar-icon">🔑</span>
                 <span>Login</span>
-              </a>
+              </link>
             </div>
           )}
         </div>
