@@ -100,6 +100,8 @@ public class WeatherController {
     }
     @GetMapping("/ping")
     public String ping() {
+        System.out.println("pong");
         return "pong";
+
     }
 }
