@@ -1,7 +1,7 @@
 // src/api/register/authService.js
 import axios from "axios";
 
-const API_URL = "https://siw-backend.onrender.com/users"; // base URL cho auth
+const API_URL = "https://siw-backend.fly.dev/users"; // base URL cho auth
 
 // Gọi API đăng ký
 export const register = async (name, email, password) => {
