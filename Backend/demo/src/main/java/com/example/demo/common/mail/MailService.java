@@ -4,6 +4,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 
@@ -16,6 +17,7 @@ public class MailService {
     public MailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
+    @Async
     public String sendRandomCodeEmail(String to, String subject) throws MessagingException {
         // Tạo mã OTP 6 chữ số
         String code = String.format("%06d", new Random().nextInt(1000000));
@@ -251,7 +253,7 @@ public class MailService {
         System.out.println("Mail đã gửi tới: " + to + " với mã: " + code);
         return code;
     }
-
+    @Async
     public void sendWarningEmail(String to, String subject, String warningMessage) throws MessagingException {
         String htmlContent = """
         <!DOCTYPE html>
