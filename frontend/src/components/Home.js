@@ -3,6 +3,9 @@ import { fetchWeather, fetchWeather7days, fetchFavorite, getProfile,fetchWeather
 import { compareCity } from "../api/weather/weatherFavorite";
 import "../styles/Home.css";
 import conditionMap from "../utils/conditionMap";
+import { Link } from "react-router-dom";
+
+
 
 const Home = () => {
   const [weatherData, setWeatherData] = useState(null);
@@ -167,11 +170,11 @@ const loadfetchFavorite = async (cityName, weather) => {
               </button>
             </div>
           ) : (
-            <div className="sidebar-footer">
-              <link to="/login" className="login-btn">
+           <div className="sidebar-footer">
+              <Link to="/login" className="login-btn">
                 <span className="sidebar-icon">🔑</span>
                 <span>Login</span>
-              </link>
+              </Link>
             </div>
           )}
         </div>
