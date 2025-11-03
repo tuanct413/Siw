@@ -4,7 +4,8 @@ import { compareCity } from "../api/weather/weatherFavorite";
 import "../styles/Home.css";
 import conditionMap from "../utils/conditionMap";
 import { Link } from "react-router-dom";
-
+import Spinner from "../loading/Spinner";
+ 
 
 
 const Home = () => {
@@ -245,7 +246,7 @@ const loadfetchFavorite = async (cityName, weather) => {
                   </div>
                 ))
               ) : (
-                <p>Đang tải dữ liệu...</p>
+                 <Spinner/>
               )}
             </div>
           </div>

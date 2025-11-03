@@ -46,7 +46,7 @@ public class WeatherScheduler {
     @Scheduled(fixedRate = 120000)
     public void pingSelf() {
         try {
-            String response = restTemplate.getForObject("http://localhost:8080/weather/ping", String.class);
+            String response = restTemplate.getForObject("https://siw-backend.onrender.com/ping", String.class);
             System.out.println("Ping response: " + response);
         } catch (Exception e) {
             System.err.println("Ping failed: " + e.getMessage());
