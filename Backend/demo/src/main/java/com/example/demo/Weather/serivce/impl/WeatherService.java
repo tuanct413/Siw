@@ -163,30 +163,41 @@ public class WeatherService implements WeatherServiceInterface, WeatherGetWeathe
     }
 
 
-    private WeatherSummary fetchWeather(String url) {
-        Map<String, Object> response = restTemplate.getForObject(url, Map.class);
-        if (response == null) {
-            throw new RuntimeException("Không lấy được dữ liệu thời tiết");
-        }
+private WeatherSummary fetchWeather(String url) {
+    Map<String, Object> response = restTemplate.getForObject(url, Map.class);
 
-        Map<String, Object> location = (Map<String, Object>) response.get("location");
-        Map<String, Object> current = (Map<String, Object>) response.get("current");
-        Map<String, Object> condition = (Map<String, Object>) current.get("condition");
-
-
-        WeatherSummary summary = new WeatherSummary();
-        summary.setCity((String) location.get("name"));
-        summary.setCountry((String)location.get("country"));
-        summary.setTemperatureC(((Number) current.get("temp_c")).doubleValue());
-        summary.setCondition((String) condition.get("text"));
-        summary.setHumidity(((Number) current.get("humidity")).intValue());
-        summary.setWindKph(((Number) current.get("wind_kph")).doubleValue());
-        summary.setVisibilityKm(((Number) current.get("vis_km")).doubleValue());
-        summary.setUvIndex(((Number) current.get("uv")).intValue());
-        summary.setIcon((String) condition.get("icon"));
-
-        return summary;
+    if (response == null) {
+        throw new RuntimeException("Không lấy được dữ liệu thời tiết");
     }
+
+    // kiểm tra API error
+    if (response.containsKey("error")) {
+        Map<String, Object> error = (Map<String, Object>) response.get("error");
+        throw new RuntimeException("Weather API error: " + error.get("message"));
+    }
+
+    Map<String, Object> location = (Map<String, Object>) response.get("location");
+    Map<String, Object> current = (Map<String, Object>) response.get("current");
+
+    if (location == null || current == null) {
+        throw new RuntimeException("Thiếu dữ liệu location hoặc current từ API");
+    }
+
+    Map<String, Object> condition = (Map<String, Object>) current.get("condition");
+
+    WeatherSummary summary = new WeatherSummary();
+    summary.setCity((String) location.get("name"));
+    summary.setCountry((String) location.get("country"));
+    summary.setTemperatureC(((Number) current.get("temp_c")).doubleValue());
+    summary.setCondition((String) condition.get("text"));
+    summary.setHumidity(((Number) current.get("humidity")).intValue());
+    summary.setWindKph(((Number) current.get("wind_kph")).doubleValue());
+    summary.setVisibilityKm(((Number) current.get("vis_km")).doubleValue());
+    summary.setUvIndex(((Number) current.get("uv")).intValue());
+    summary.setIcon((String) condition.get("icon"));
+
+    return summary;
+}
 
     @Override
     public ResponseEntity<Map<String, Object>> createHistoryWeather(LocationRequest request){

@@ -5,6 +5,9 @@ import "../styles/Home.css";
 import conditionMap from "../utils/conditionMap";
 import { Link } from "react-router-dom";
 import Spinner from "../loading/Spinner";
+import { cityMap } from "../utils/cityMap";
+
+import { vietnamCities } from "../utils/vietnamCities";
  
 
 
@@ -19,16 +22,31 @@ const Home = () => {
   const [compareData, setCompareData] = useState(null);
   const [activeTab, setActiveTab] = useState("weather");
   const [hourlyData, setHourlyData] = useState([]);
+  const [filteredCities, setFilteredCities] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
 
   const cityOptions = ["Ha Noi", "Ho Chi Minh", "Da Nang", "Hai Phong", "Can Tho"];
 
-useEffect(() => {
-  loadWeather("Ha Noi");
-  loadfetchFavorite("Ha Noi", "Rain");
-  fetchUserProfile();
-}, []);
+  useEffect(() => {
+    loadWeather("Ha Noi");
+    loadfetchFavorite("Ha Noi", "Rain");
+    fetchUserProfile();
+  }, []);
 
+  const handleSearch = (value) => {
+  setCity(value);
 
+  if (value.length > 0) {
+    const filtered = vietnamCities.filter((c) =>
+      c.label.toLowerCase().includes(value.toLowerCase())
+    );
+
+    setFilteredCities(filtered);
+    setShowDropdown(true);
+  } else {
+    setShowDropdown(false);
+  }
+};
   const fetchUserProfile = async () => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -44,22 +62,28 @@ useEffect(() => {
 
 const loadWeather = async (cityName) => {
   try {
-    const current = await fetchWeather(cityName);
-    const forecast = await fetchWeather7days(cityName);
-    const forecast1 = await fetchWeather24hours(cityName);
+    const [current, forecast, forecast1] = await Promise.all([
+      fetchWeather(cityName),
+      fetchWeather7days(cityName),
+      fetchWeather24hours(cityName)
+    ]);
 
     setWeatherData(current);
     setWeather7daysData(forecast);
 
-    // format hourly như useEffect
     if (Array.isArray(forecast1)) {
       const formattedHourly = forecast1.slice(0, 12).map(hour => ({
-        time: new Date(hour.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        time: new Date(hour.createdAt).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit"
+        }),
         icon: <img src={hour.conditionIcon} alt={hour.conditionText} />,
-        temp: `${hour.maxtemp_c}° `
+        temp: `${hour.maxtemp_c}°`
       }));
+
       setHourlyData(formattedHourly);
     }
+
   } catch (error) {
     console.error("API error:", error);
   }
@@ -199,8 +223,25 @@ const loadfetchFavorite = async (cityName, weather) => {
                     className="search-input"
                     placeholder="Search for cities"
                     value={city}
-                    onChange={(e) => setCity(e.target.value)}
+                    onChange={(e) => handleSearch(e.target.value)}
                   />
+                  {showDropdown && (
+                      <div className="search-dropdown">
+                        {filteredCities.map((c, index) => (
+                          <div
+                            key={index}
+                            className="dropdown-item"
+                            onClick={() => {
+                              setCity(c.label);
+                              loadWeather(c.value);
+                              setShowDropdown(false);
+                            }}
+                          >
+                            {c.label}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                 </form>
               </div>
 
@@ -212,7 +253,8 @@ const loadfetchFavorite = async (cityName, weather) => {
                 {weatherData && (
                   <div className="main-weather-section">
                     <div className="city-header">
-                      <h1 className="city-name">{weatherData.city}</h1>
+                      <h1 className="city-name">
+                        {cityMap[weatherData.city] || weatherData.city}</h1>
                       <p className="chance-rain">Độ ẩm: {weatherData.humidity}%</p>
                     </div>
 
