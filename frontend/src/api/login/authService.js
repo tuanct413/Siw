@@ -1,7 +1,7 @@
 // src/api/login/authService.js
 import axios from "axios";
 
-const API_URL = "https://siw-backend.fly.dev/auth"; // chỉnh lại nếu khác
+const API_URL = process.env.REACT_APP_API_URL + "/auth"; 
 
 // Login
 export const login = async (email, password) => {

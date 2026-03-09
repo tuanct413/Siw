@@ -1,7 +1,7 @@
 import axios from "axios";
 
-const API_URL = "https://siw-backend.fly.dev/users";
-const API_URL1 = "https://siw-backend.fly.dev/auth";
+const API_URL = process.env.REACT_APP_API_URL + "/users"; // base URL cho auth
+const API_URL1 = process.env.REACT_APP_API_URL + "/auth";
 
 export const verify = async (email) => {
   try {

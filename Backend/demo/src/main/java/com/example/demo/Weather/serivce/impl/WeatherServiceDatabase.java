@@ -6,6 +6,7 @@ import com.example.demo.Weather.Repository.WeatherRecordRepository;
 import com.example.demo.Weather.serivce.Interface.WeatherGetWeather;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -22,6 +23,7 @@ public class WeatherServiceDatabase implements WeatherGetWeather {
     }
 
     @Override
+    @Transactional
     public WeatherSummary getWeather(String city) {
 
         // Xác định cutoff 10 ngày trước
